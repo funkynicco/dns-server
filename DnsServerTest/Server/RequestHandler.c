@@ -19,7 +19,7 @@ BOOL RequestHandlerInitialize(LPSERVER_INFO lpServerInfo, DWORD dwNumberOfThread
 		lpRequestHandler->hThreads[i] = CreateThread(NULL, 0, RequestHandlerThread, lpServerInfo, CREATE_SUSPENDED, NULL);
 		if (!lpRequestHandler->hThreads[i])
 		{
-			printf(__FUNCTION__ " - Could not create thread (%d of %d): %d\n", i + 1, dwNumberOfThreads, GetLastError());
+			printf(__FUNCTION__ " - Could not create thread (%d of %d): %d - %s\n", i + 1, dwNumberOfThreads, GetLastError(), GetErrorMessage(GetLastError()));
 			RequestHandlerShutdown(lpServerInfo);
 			return FALSE;
 		}
@@ -29,7 +29,7 @@ BOOL RequestHandlerInitialize(LPSERVER_INFO lpServerInfo, DWORD dwNumberOfThread
 	lpRequestHandler->hIocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, dwNumberOfThreads);
 	if (!lpRequestHandler->hIocp)
 	{
-		printf(__FUNCTION__ " - Could not create IO completion port: %d\n", GetLastError());
+		printf(__FUNCTION__ " - Could not create IO completion port: %d - %s\n", GetLastError(), GetErrorMessage(GetLastError()));
 		RequestHandlerShutdown(lpServerInfo);
 		return FALSE;
 	}
@@ -70,7 +70,7 @@ void RequestHandlerPostRequest(LPREQUEST_INFO lpRequestInfo)
 {
 	if (!PostQueuedCompletionStatus(lpRequestInfo->lpServerInfo->RequestHandler.hIocp, 1, 1, &lpRequestInfo->Overlapped))
 	{
-		printf(__FUNCTION__ " - PostQueuedCompletionStatus returned FALSE, code: %u\n", GetLastError());
+		printf(__FUNCTION__ " - PostQueuedCompletionStatus returned FALSE, code: %u - %s\n", GetLastError(), GetErrorMessage(GetLastError()));
 		DestroyRequestInfo(lpRequestInfo);
 	}
 }
@@ -83,7 +83,10 @@ void RequestHandlerProcessRequest(LPREQUEST_INFO lpRequestInfo)
 	printf(__FUNCTION__ " - [Thread %u] request from %s:%d\n", GetCurrentThreadId(), addrtext, ntohs(lpRequestInfo->SocketAddress.sin_port));
 
 	// destroy ..
-	DestroyRequestInfo(lpRequestInfo);
+	//DestroyRequestInfo(lpRequestInfo);
+	strcpy(lpRequestInfo->Buffer, "w3w lel kaka");
+	lpRequestInfo->dwLength = strlen(lpRequestInfo->Buffer);
+	ServerPostSend(lpRequestInfo);
 }
 
 DWORD WINAPI RequestHandlerThread(LPVOID lp)
@@ -99,7 +102,7 @@ DWORD WINAPI RequestHandlerThread(LPVOID lp)
 	{
 		if (!GetQueuedCompletionStatus(lpRequestHandler->hIocp, &dwBytesTransferred, &ulCompletionKey, (LPOVERLAPPED*)&lpRequestInfo, INFINITE))
 		{
-			printf(__FUNCTION__ " - GetQueuedCompletionStatus returned FALSE, code: %u\n", GetLastError());
+			printf(__FUNCTION__ " - GetQueuedCompletionStatus returned FALSE, code: %u - %s\n", GetLastError(), GetErrorMessage(GetLastError()));
 			Sleep(50);
 			continue;
 		}

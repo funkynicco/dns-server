@@ -25,32 +25,37 @@ BOOL StartServer(LPSERVER_INFO lpServerInfo, int port)
 
 	if (CreateIoCompletionPort((HANDLE)lpServerInfo->Socket, lpServerInfo->hNetworkIocp, lpServerInfo->Socket, 0) != lpServerInfo->hNetworkIocp)
 	{
-		printf(__FUNCTION__ " - Failed to associate socket to network IOCP, code: %u\n", GetLastError());
+		printf(__FUNCTION__ " - Failed to associate socket to network IOCP, code: %u - %s\n", GetLastError(), GetErrorMessage(GetLastError()));
 		DWORD dwError = GetLastError();
 		SAFE_CLOSE_SOCKET(lpServerInfo->Socket);
 		SetLastError(dwError);
 		return FALSE;
 	}
 
-	LPREQUEST_INFO lpRequestInfo = AllocateRequestInfo(lpServerInfo);
-
-	LPNETWORK_BUFFER lpNetworkBuffer = AllocateNetworkBuffer(lpRequestInfo);
-
-	ServerPostReceive(lpNetworkBuffer);
+	ServerPostReceive(AllocateRequestInfo(lpServerInfo, NULL));
 
 	return TRUE;
 }
 
 void StopServer(LPSERVER_INFO lpServerInfo)
 {
-	/*while (lpServerInfo->lpPendingRequests)
+	if (lpServerInfo->Socket != INVALID_SOCKET)
 	{
-		LPREQUEST_INFO lpRequestInfo = lpServerInfo->lpPendingRequests;
-		lpServerInfo->lpPendingRequests = lpServerInfo->lpPendingRequests->next;
-		DestroyRequestInfo(lpRequestInfo);
-	}*/
+		// should make sure all I/O threads stop etc..
+		if (!CancelIoEx((HANDLE)lpServerInfo->Socket, NULL))
+			printf(__FUNCTION__ " - Failed to cancel pending I/O operations, code: %u - %s\n", GetLastError(), GetErrorMessage(GetLastError()));
 
-	SAFE_CLOSE_SOCKET(lpServerInfo->Socket);
+		Sleep(100); // allow a tiny bit of time for canceling pending I/O operations
+
+		DWORD dwAllocatedRequests;
+		while ((dwAllocatedRequests = InterlockedCompareExchange(&lpServerInfo->dwAllocatedRequests, 0, 0)) > 0)
+		{
+			printf(__FUNCTION__ " - [Warning] (Pending I/O operations) dwAllocatedRequests: %u\n", dwAllocatedRequests);
+			Sleep(1000);
+		}
+
+		SAFE_CLOSE_SOCKET(lpServerInfo->Socket);
+	}
 }
 
 void ProcessServer(LPSERVER_INFO lpServerInfo)
@@ -135,6 +140,6 @@ void ProcessServer(LPSERVER_INFO lpServerInfo)
 		ASSERT_READ(2);
 		u_short questionClass = *((u_short*)pReadPtr); pReadPtr += 2;
 		printf("\tQuestion Class: %d\n", ntohs(questionClass));
-}
+	}
 #endif
 }

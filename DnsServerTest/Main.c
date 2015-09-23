@@ -16,7 +16,7 @@ int main(int argc, char* argv[])
 			while (1)
 			{
 				if (_kbhit() && _getch() == VK_ESCAPE)
-					return;
+					break;
 
 				ProcessServer(lpServerInfo);
 				Sleep(50);
@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
 			StopServer(lpServerInfo);
 		}
 		else
-			printf("Failed to start server, socket error: %d\n", GetLastError());
+			printf("Failed to start server, socket error: %d - %s\n", GetLastError(), GetErrorMessage(GetLastError()));
 
 		DestroyServerInfo(lpServerInfo);
 	}

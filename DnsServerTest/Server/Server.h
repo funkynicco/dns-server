@@ -2,6 +2,12 @@
 
 #define MAX_THREADS 32
 
+enum
+{
+	NIO_RECV,
+	NIO_SEND
+};
+
 typedef struct _tagDnsHeader
 {
 	// A 16-bit field identifying a specific DNS transaction.
@@ -25,26 +31,19 @@ typedef struct _tagDnsHeader
 
 } DNS_HEADER, *LPDNS_HEADER;
 
-typedef struct _tagNetworkBuffer
-{
-	WSAOVERLAPPED Overlapped;
-
-	struct _tagRequestInfo* lpRequestInfo;
-	char Buffer[1024];
-	DWORD dwLength;
-	DWORD dwFlags;
-
-	struct _tagNetworkBuffer* next;
-
-} NETWORK_BUFFER, *LPNETWORK_BUFFER;
-
 typedef struct _tagRequestInfo
 {
-	OVERLAPPED Overlapped;
+	WSAOVERLAPPED Overlapped;
 
 	struct _tagServerInfo* lpServerInfo;
 	SOCKADDR_IN SocketAddress;
 	int SockAddrLen;
+
+	char Buffer[1024];
+	DWORD dwLength;
+	DWORD dwFlags;
+
+	int IOMode;
 
 	struct _tagRequestInfo* next;
 
@@ -66,7 +65,7 @@ typedef struct _tagServerInfo
 	REQUEST_HANDLER_INFO RequestHandler;
 
 	LPREQUEST_INFO lpFreeRequests;
-	LPNETWORK_BUFFER lpFreeNetworkBuffers;
+	DWORD dwAllocatedRequests;
 	CRITICAL_SECTION csAllocRequest;
 
 	// Network server
@@ -83,11 +82,9 @@ typedef struct _tagServerInfo
 LPSERVER_INFO		AllocateServerInfo();
 void				DestroyServerInfo(LPSERVER_INFO lpServerInfo);
 
-LPREQUEST_INFO		AllocateRequestInfo(LPSERVER_INFO lpServerInfo);
+// If lpCopyOriginal is not NULL then it will copy all values from lpCopyOriginal into a new instance
+LPREQUEST_INFO		AllocateRequestInfo(LPSERVER_INFO lpServerInfo, LPREQUEST_INFO lpCopyOriginal);
 void				DestroyRequestInfo(LPREQUEST_INFO lpRequestInfo);
-
-LPNETWORK_BUFFER	AllocateNetworkBuffer(LPREQUEST_INFO lpRequestInfo);
-void				DestroyNetworkBuffer(LPNETWORK_BUFFER lpNetworkBuffer);
 
 /***************************************************************************************
  * Server.c
@@ -110,5 +107,5 @@ void RequestHandlerPostRequest(LPREQUEST_INFO lpRequestInfo);
  * ServerIO.c
  ***************************************************************************************/
 
-BOOL ServerPostReceive(LPNETWORK_BUFFER lpNetworkBuffer);
-BOOL ServerPostSend(LPNETWORK_BUFFER lpNetworkBuffer);
+BOOL ServerPostReceive(LPREQUEST_INFO lpRequestInfo);
+BOOL ServerPostSend(LPREQUEST_INFO lpRequestInfo);

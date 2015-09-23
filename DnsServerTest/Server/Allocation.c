@@ -20,7 +20,7 @@ LPSERVER_INFO AllocateServerInfo()
 
 	if (!InitializeCriticalSectionAndSpinCount(&lpServerInfo->csAllocRequest, 2000))
 	{
-		printf(__FUNCTION__ " - InitializeCriticalSectionAndSpinCount returned FALSE, code: %u\n", GetLastError());
+		printf(__FUNCTION__ " - InitializeCriticalSectionAndSpinCount returned FALSE, code: %u - %s\n", GetLastError(), GetErrorMessage(GetLastError()));
 		CloseHandle(lpServerInfo->hNetworkIocp);
 		free(lpServerInfo);
 		return NULL;
@@ -34,10 +34,10 @@ LPSERVER_INFO AllocateServerInfo()
 		return NULL;
 	}
 
-	DWORD WINAPI ServerReceive(LPVOID lp);;
+	DWORD WINAPI ServerIOHandler(LPVOID lp);;
 	for (DWORD i = 0; i < 2; ++i)
 	{
-		lpServerInfo->hNetworkThreads[i] = CreateThread(NULL, 0, ServerReceive, lpServerInfo, CREATE_SUSPENDED, NULL);
+		lpServerInfo->hNetworkThreads[i] = CreateThread(NULL, 0, ServerIOHandler, lpServerInfo, CREATE_SUSPENDED, NULL);
 		if (!lpServerInfo->hNetworkThreads[i])
 		{
 			DestroyServerInfo(lpServerInfo);
@@ -97,20 +97,27 @@ void DestroyServerInfo(LPSERVER_INFO lpServerInfo)
  * Request Info
  ***************************************************************************************/
 
-LPREQUEST_INFO AllocateRequestInfo(LPSERVER_INFO lpServerInfo)
+LPREQUEST_INFO AllocateRequestInfo(LPSERVER_INFO lpServerInfo, LPREQUEST_INFO lpCopyOriginal)
 {
 	EnterCriticalSection(&lpServerInfo->csAllocRequest);
 	LPREQUEST_INFO lpRequestInfo = lpServerInfo->lpFreeRequests;
 	if (lpRequestInfo)
 		lpServerInfo->lpFreeRequests = lpServerInfo->lpFreeRequests->next;
+	//++lpServerInfo->dwAllocatedRequests;
 	LeaveCriticalSection(&lpServerInfo->csAllocRequest);
 
-	if (!lpRequestInfo)
-		lpRequestInfo = (LPREQUEST_INFO)malloc(sizeof(REQUEST_INFO)); // may need to do GlobalAlloc or w/e...
+	InterlockedIncrement(&lpServerInfo->dwAllocatedRequests);
 
-	ZeroMemory(lpRequestInfo, sizeof(REQUEST_INFO));
+	if (!lpRequestInfo) // TODO: allocate a memory block and initialize lpFreeRequests instead of allocating single instances..
+		lpRequestInfo = (LPREQUEST_INFO)malloc(sizeof(REQUEST_INFO));
 
-	lpRequestInfo->lpServerInfo = lpServerInfo;
+	if (!lpCopyOriginal)
+	{
+		ZeroMemory(lpRequestInfo, sizeof(REQUEST_INFO));
+		lpRequestInfo->lpServerInfo = lpServerInfo;
+	}
+	else
+		CopyMemory(lpRequestInfo, lpCopyOriginal, sizeof(REQUEST_INFO));
 
 	return lpRequestInfo;
 }
@@ -122,42 +129,8 @@ void DestroyRequestInfo(LPREQUEST_INFO lpRequestInfo)
 	EnterCriticalSection(&lpServerInfo->csAllocRequest);
 	lpRequestInfo->next = lpServerInfo->lpFreeRequests;
 	lpServerInfo->lpFreeRequests = lpRequestInfo;
+	//--lpServerInfo->dwAllocatedRequests;
 	LeaveCriticalSection(&lpServerInfo->csAllocRequest);
-}
-
-/***************************************************************************************
- * Network Buffer
- ***************************************************************************************/
-
-LPNETWORK_BUFFER AllocateNetworkBuffer(LPREQUEST_INFO lpRequestInfo)
-{
-	LPSERVER_INFO lpServerInfo = lpRequestInfo->lpServerInfo;
-
-	EnterCriticalSection(&lpServerInfo->csAllocRequest);
-	LPNETWORK_BUFFER lpNetworkBuffer = lpServerInfo->lpFreeNetworkBuffers;
-	if (lpNetworkBuffer)
-		lpServerInfo->lpFreeNetworkBuffers = lpServerInfo->lpFreeNetworkBuffers->next;
-	LeaveCriticalSection(&lpServerInfo->csAllocRequest);
-
-	// TODO: allocate a memory block and initialize lpFreeNetworkBuffers instead of allocating single instances..
-	if (!lpNetworkBuffer)
-		lpNetworkBuffer = (LPNETWORK_BUFFER)VirtualAlloc(NULL, sizeof(NETWORK_BUFFER), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-//		lpNetworkBuffer = (LPNETWORK_BUFFER)malloc(sizeof(NETWORK_BUFFER));
-
-	ZeroMemory(lpNetworkBuffer, sizeof(NETWORK_BUFFER));
 	
-	lpNetworkBuffer->lpRequestInfo = lpRequestInfo;
-
-	return lpNetworkBuffer;
-}
-
-void DestroyNetworkBuffer(LPNETWORK_BUFFER lpNetworkBuffer)
-{
-	LPREQUEST_INFO lpRequestInfo = lpNetworkBuffer->lpRequestInfo;
-	LPSERVER_INFO lpServerInfo = lpRequestInfo->lpServerInfo;
-
-	EnterCriticalSection(&lpServerInfo->csAllocRequest);
-	lpNetworkBuffer->next = lpServerInfo->lpFreeNetworkBuffers;
-	lpServerInfo->lpFreeNetworkBuffers = lpNetworkBuffer;
-	LeaveCriticalSection(&lpServerInfo->csAllocRequest);
+	InterlockedDecrement(&lpServerInfo->dwAllocatedRequests);
 }
