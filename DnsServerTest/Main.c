@@ -39,7 +39,11 @@ int main(int argc, char* argv[])
 	LPSERVER_INFO lpServerInfo = AllocateServerInfo();
 	if (lpServerInfo)
 	{
-		const int Port = 5666; // default 53 - 5666
+		SOCKADDR_IN SecondaryDnsServer;
+		MakeSocketAddress(&SecondaryDnsServer, "8.8.8.8", 53);
+		ServerSetSecondaryDnsServer(lpServerInfo, &SecondaryDnsServer);
+
+		const int Port = 53; // default 53 - 5666
 
 		if (StartServer(lpServerInfo, Port))
 		{
@@ -54,6 +58,9 @@ int main(int argc, char* argv[])
 #endif // __LOG_SERVER_IO
 
 				RequestTimeoutProcess(lpServerInfo->lpRequestTimeoutHandler);
+				
+				// (Maintenance) Fill up the socket pool
+				SocketPoolFill();
 
 				Sleep(100);
 			}

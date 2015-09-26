@@ -84,6 +84,8 @@ typedef struct _tagServerInfo
 
 	LPREQUEST_TIMEOUT_HANDLER lpRequestTimeoutHandler;
 
+	SOCKADDR_IN SecondaryDnsServerSocketAddress;
+
 	// Network server
 	HANDLE hNetworkIocp;
 	HANDLE hNetworkThreads[MAX_THREADS];
@@ -118,6 +120,7 @@ void				DestroyRequestInfo(LPREQUEST_INFO lpRequestInfo);
 
 BOOL StartServer(LPSERVER_INFO lpServerInfo, int port);
 void StopServer(LPSERVER_INFO lpServerInfo);
+void ServerSetSecondaryDnsServer(LPSERVER_INFO lpServerInfo, LPSOCKADDR_IN lpSockAddr);
 
 /***************************************************************************************
  * RequestHandler.c
@@ -147,8 +150,9 @@ void ResolveDns(LPREQUEST_INFO lpRequestInfo);
  * SocketPool.c
  ***************************************************************************************/
 // Safely destroys a socket from the socket pool
-#define SOCKETPOOL_SAFE_DESTROY(_Socket) if ((_Socket) != INVALID_SOCKET) { DestroySocket(_Socket); (_Socket) = INVALID_SOCKET; }
+#define SOCKETPOOL_SAFE_DESTROY(_Socket) if ((_Socket) != INVALID_SOCKET) { SocketPoolDestroySocket(_Socket); (_Socket) = INVALID_SOCKET; }
 void   InitializeSocketPool();
 void   DestroySocketPool();
-SOCKET AllocateSocket();
-void   DestroySocket(SOCKET Socket);
+SOCKET SocketPoolAllocateSocket();
+void   SocketPoolDestroySocket(SOCKET Socket);
+void   SocketPoolFill();

@@ -16,6 +16,10 @@ LPSERVER_INFO AllocateServerInfo()
 	ZeroMemory(lpServerInfo, sizeof(SERVER_INFO));
 
 	lpServerInfo->Socket = INVALID_SOCKET;
+	lpServerInfo->SecondaryDnsServerSocketAddress.sin_family = AF_INET;
+	lpServerInfo->SecondaryDnsServerSocketAddress.sin_addr.s_addr = inet_addr("8.8.8.8");
+	lpServerInfo->SecondaryDnsServerSocketAddress.sin_port = htons(53);
+
 	lpServerInfo->hNetworkIocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 2);
 	if (!lpServerInfo->hNetworkIocp)
 	{
@@ -116,14 +120,13 @@ void DestroyServerInfo(LPSERVER_INFO lpServerInfo)
  * Request Info
  ***************************************************************************************/
 
-static LPREQUEST_INFO InternalAllocateRequestInfo(LPSERVER_INFO lpServerInfo, SOCKET Socket, LPREQUEST_INFO lpCopyOriginal)
+static LPREQUEST_INFO InternalAllocateRequestInfo(LPSERVER_INFO lpServerInfo, SOCKET Socket, LPREQUEST_INFO lpCopyOriginal, LPDWORD lpdwAllocations)
 {
-	DWORD dwAllocations;
 	EnterCriticalSection(&lpServerInfo->csAllocRequest);
 	LPREQUEST_INFO lpRequestInfo = lpServerInfo->lpFreeRequests;
 	if (lpRequestInfo)
 		lpServerInfo->lpFreeRequests = lpServerInfo->lpFreeRequests->next;
-	dwAllocations = ++lpServerInfo->dwAllocatedRequests;
+	*lpdwAllocations = ++lpServerInfo->dwAllocatedRequests;
 	LeaveCriticalSection(&lpServerInfo->csAllocRequest);
 
 	if (!lpRequestInfo) // TODO: allocate a memory block and initialize lpFreeRequests instead of allocating single instances..
@@ -151,7 +154,8 @@ static LPREQUEST_INFO InternalAllocateRequestInfo(LPSERVER_INFO lpServerInfo, SO
 
 LPREQUEST_INFO AllocateRequestInfo(LPSERVER_INFO lpServerInfo, SOCKET Socket)
 {
-	LPREQUEST_INFO lpRequestInfo = InternalAllocateRequestInfo(lpServerInfo, Socket, NULL);
+	DWORD dwAllocations;
+	LPREQUEST_INFO lpRequestInfo = InternalAllocateRequestInfo(lpServerInfo, Socket, NULL, &dwAllocations);
 
 #ifdef __LOG_ALLOCATIONS
 	LoggerWrite(__FUNCTION__ " - Allocated %08x (%u allocations)", lpRequestInfo, dwAllocations);
@@ -168,10 +172,15 @@ LPREQUEST_INFO CopyRequestInfo(LPREQUEST_INFO lpOriginalRequestInfo)
 		return NULL;
 	}
 
-	LPREQUEST_INFO lpRequestInfo = InternalAllocateRequestInfo(lpOriginalRequestInfo->lpServerInfo, lpOriginalRequestInfo->Socket, lpOriginalRequestInfo);
+	DWORD dwAllocations;
+	LPREQUEST_INFO lpRequestInfo = InternalAllocateRequestInfo(
+		lpOriginalRequestInfo->lpServerInfo,
+		lpOriginalRequestInfo->Socket,
+		lpOriginalRequestInfo,
+		&dwAllocations);
 
 #ifdef __LOG_ALLOCATIONS
-	LoggerWrite(__FUNCTION__ " - Allocated %08x [COPY OF %08x] (%u allocations)", lpRequestInfo, lpCopyOriginal, dwAllocations);
+	LoggerWrite(__FUNCTION__ " - Allocated %08x [COPY OF %08x] (%u allocations)", lpRequestInfo, lpOriginalRequestInfo, dwAllocations);
 #endif // __LOG_ALLOCATIONS
 
 	return lpRequestInfo;

@@ -6,7 +6,7 @@ BOOL StartServer(LPSERVER_INFO lpServerInfo, int port)
 	if (lpServerInfo->Socket != INVALID_SOCKET)
 		return FALSE;
 
-	lpServerInfo->Socket = AllocateSocket();
+	lpServerInfo->Socket = SocketPoolAllocateSocket();
 	if (lpServerInfo->Socket == INVALID_SOCKET)
 		return FALSE;
 
@@ -102,4 +102,9 @@ void StopServer(LPSERVER_INFO lpServerInfo)
 
 		SOCKETPOOL_SAFE_DESTROY(lpServerInfo->Socket);
 	}
+}
+
+void ServerSetSecondaryDnsServer(LPSERVER_INFO lpServerInfo, LPSOCKADDR_IN lpSockAddr)
+{
+	CopyMemory(&lpServerInfo->SecondaryDnsServerSocketAddress, lpSockAddr, sizeof(SOCKADDR_IN));
 }

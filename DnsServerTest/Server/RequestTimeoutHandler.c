@@ -83,7 +83,6 @@ void RequestTimeoutSetCancelTimeout(LPREQUEST_TIMEOUT_HANDLER lpHandler, LPREQUE
 {
 	EnterCriticalSection(&lpHandler->csLock);
 
-	// TODO: check if the lpRequestInfo isn't already in the list...
 	struct LinkedListObject* lpObj;
 	for (lpObj = lpHandler->lpAllocatedRequests; lpObj; lpObj = lpObj->next)
 	{

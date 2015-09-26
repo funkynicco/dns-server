@@ -91,7 +91,7 @@ void ResolveDns(LPREQUEST_INFO lpRequestInfo)
 	lpRelayRequestInfo->lpInnerRequest = lpRequestInfo; // IO_RELAY_SEND should delete this
 
 	// generate a new socket
-	lpRelayRequestInfo->Socket = AllocateSocket();
+	lpRelayRequestInfo->Socket = SocketPoolAllocateSocket();
 	if (lpRelayRequestInfo->Socket == INVALID_SOCKET)
 	{
 		Error(__FUNCTION__ " - Failed to create new socket for resolving DNS [request %08x], code: %u - %s",
@@ -114,8 +114,8 @@ void ResolveDns(LPREQUEST_INFO lpRequestInfo)
 		DestroyRequestInfo(lpRelayRequestInfo);
 	}
 
-	lpRelayRequestInfo->SocketAddress.sin_addr.s_addr = inet_addr("8.8.8.8");
-	lpRelayRequestInfo->SocketAddress.sin_port = htons(53);
+	// set the secondary socket address for secondary DNS server (in the chain)
+	CopyMemory(&lpRelayRequestInfo->SocketAddress, &lpRelayRequestInfo->lpServerInfo->SecondaryDnsServerSocketAddress, sizeof(SOCKADDR_IN));
 	lpRelayRequestInfo->SockAddrLen = sizeof(lpRelayRequestInfo->SocketAddress);
 
 	LPREQUEST_INFO lpRelayResponseRequestInfo = CopyRequestInfo(lpRelayRequestInfo);

@@ -21,6 +21,14 @@ BOOL GetIPFromSocketAddress(LPSOCKADDR_IN lpAddr, LPSTR lpOutput, DWORD dwSizeOf
 	return TRUE;
 }
 
+void MakeSocketAddress(LPSOCKADDR_IN lpAddr, const char* address, u_short port)
+{
+	ZeroMemory(lpAddr, sizeof(SOCKADDR_IN));
+	lpAddr->sin_family = AF_INET;
+	lpAddr->sin_addr.s_addr = inet_addr(address);
+	lpAddr->sin_port = htons(port);
+}
+
 void FlipDnsHeader(LPDNS_HEADER lpDnsHeader)
 {
 	lpDnsHeader->TransactionID = ntohs(lpDnsHeader->TransactionID);
@@ -68,7 +76,7 @@ LPCSTR GetErrorMessage(DWORD dwError)
 {
 	if (!GetErrorMessageBuffer(dwError, g_internalErrorMessageBuffer, sizeof(g_internalErrorMessageBuffer)))
 		return "[Unknown error code]";
-	
+
 	return g_internalErrorMessageBuffer;
 }
 
@@ -102,7 +110,7 @@ LPCSTR GetIOMode(int IOMode)
 DWORD CriticalSectionIncrementValue(LPCRITICAL_SECTION lpCriticalSection, LPDWORD lpdwValue)
 {
 	DWORD dwResult;
-	
+
 	EnterCriticalSection(lpCriticalSection);
 	dwResult = ++(*lpdwValue);
 	LeaveCriticalSection(lpCriticalSection);
@@ -119,4 +127,37 @@ DWORD CriticalSectionDecrementValue(LPCRITICAL_SECTION lpCriticalSection, LPDWOR
 	LeaveCriticalSection(lpCriticalSection);
 
 	return dwResult;
+}
+
+void GetFrequencyCounterResult(LPSTR lpOutput, LARGE_INTEGER liFrequency, LARGE_INTEGER liStart, LARGE_INTEGER liEnd)
+{
+	double value = (double)(liEnd.QuadPart - liStart.QuadPart) / liFrequency.QuadPart;
+
+	int n = 0;
+	while (value < 1.0)
+	{
+		value *= 1000.0;
+		++n;
+	}
+
+	switch (n)
+	{
+	case 0:
+		if (value >= 60.0)
+		{
+			if (value >= 3600.0)
+				sprintf(lpOutput, "%.3f hours", value / 3600.0);
+			else
+				sprintf(lpOutput, "%.3f minutes", value / 60.0);
+		}
+		else
+			sprintf(lpOutput, "%.3f seconds", value);
+		break;
+	case 1: sprintf(lpOutput, "%.3f milliseconds", value); break;
+	case 2: sprintf(lpOutput, "%.3f microseconds", value); break;
+	case 3: sprintf(lpOutput, "%.3f nanoseconds", value); break;
+	default:
+		sprintf(lpOutput, "ERR n:%d", n);
+		break;
+	}
 }

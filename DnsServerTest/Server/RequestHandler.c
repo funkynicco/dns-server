@@ -82,15 +82,16 @@ void RequestHandlerPostRequest(LPREQUEST_INFO lpRequestInfo)
 
 void RequestHandlerProcessRequest(LPREQUEST_INFO lpRequestInfo)
 {
-	// kek wak po le banana
+#ifdef __LOG_REQUESTS
 	char addrtext[16];
 	GetIPFromSocketAddress(&lpRequestInfo->SocketAddress, addrtext, sizeof(addrtext));
 	LoggerWrite(__FUNCTION__ " - Request from %s:%d", addrtext, ntohs(lpRequestInfo->SocketAddress.sin_port));
+#endif // __LOG_REQUESTS
 
-	strcpy(lpRequestInfo->Buffer, "hello");
+	/*strcpy(lpRequestInfo->Buffer, "hello");
 	lpRequestInfo->dwLength = 5;
 	PostSend(lpRequestInfo, IO_SEND);
-	return;
+	return;*/
 
 	if (lpRequestInfo->dwLength < sizeof(DNS_HEADER))
 	{
@@ -155,12 +156,9 @@ void RequestHandlerProcessRequest(LPREQUEST_INFO lpRequestInfo)
 		AssembleDomainFromLabels(domainName, aLabels, dwNumLabels);
 		Error(__FUNCTION__ " - Resolve domain name: '%s'", domainName);
 	}
+#endif
 
 	ResolveDns(lpRequestInfo);
-#endif
-	/*strcpy(lpRequestInfo->Buffer, "w3w lel kaka");
-	lpRequestInfo->dwLength = strlen(lpRequestInfo->Buffer);
-	PostSend(lpRequestInfo);*/
 }
 
 DWORD WINAPI RequestHandlerThread(LPVOID lp)

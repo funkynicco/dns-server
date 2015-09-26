@@ -67,6 +67,11 @@ BOOL PostReceive(LPREQUEST_INFO lpRequestInfo, int IOMode)
 		Error(__FUNCTION__ " - %08x - %s not found in lpPendingWSARecvFrom", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
 	LeaveCriticalSection(&lpServerInfo->csStats);
 
+#ifndef __LOG_SERVER_IO
+	char addrtext[16];
+	GetIPFromSocketAddress(&lpRequestInfo->SocketAddress, addrtext, sizeof(addrtext));
+#endif // __LOG_SERVER_IO
+
 	Error(__FUNCTION__ " - [ERROR] WSARecvFrom [%s] returned %d, code: %u - %s", addrtext, err, dwError, GetErrorMessage(dwError));
 
 	return FALSE;
@@ -135,6 +140,11 @@ BOOL PostSend(LPREQUEST_INFO lpRequestInfo, int IOMode)
 	if (!ArrayContainerDeleteElementByValue(lpServerInfo->lpPendingWSASendTo, lpRequestInfo))
 		Error(__FUNCTION__ " - %08x - %s not found in lpPendingWSASendTo", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
 	LeaveCriticalSection(&lpServerInfo->csStats);
+
+#ifndef __LOG_SERVER_IO
+	char addrtext[16];
+	GetIPFromSocketAddress(&lpRequestInfo->SocketAddress, addrtext, sizeof(addrtext));
+#endif // __LOG_SERVER_IO
 
 	Error(__FUNCTION__ " - [ERROR] WSASendTo [%s] returned %d, code: %u - %s", addrtext, err, dwError, GetErrorMessage(dwError));
 
