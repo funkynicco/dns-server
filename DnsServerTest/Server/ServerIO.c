@@ -1,8 +1,13 @@
 #include "StdAfx.h"
 #include "Server.h"
 
-BOOL ServerPostReceive(LPREQUEST_INFO lpRequestInfo)
+BOOL PostReceive(LPREQUEST_INFO lpRequestInfo, int IOMode)
 {
+#ifdef __LOG_SERVER_IO
+	char addrtext[16];
+	GetIPFromSocketAddress(&lpRequestInfo->SocketAddress, addrtext, sizeof(addrtext));
+#endif // __LOG_SERVER_IO
+
 	LPSERVER_INFO lpServerInfo = lpRequestInfo->lpServerInfo;
 
 	WSABUF wsaBuf;
@@ -11,10 +16,14 @@ BOOL ServerPostReceive(LPREQUEST_INFO lpRequestInfo)
 
 	lpRequestInfo->dwFlags = 0;
 	lpRequestInfo->SockAddrLen = sizeof(lpRequestInfo->SocketAddress);
-	lpRequestInfo->IOMode = NIO_RECV;
+	lpRequestInfo->IOMode = IOMode;
+
+	EnterCriticalSection(&lpServerInfo->csStats);
+	ASSERT(ArrayContainerAddElement(lpServerInfo->lpPendingWSARecvFrom, lpRequestInfo));
+	LeaveCriticalSection(&lpServerInfo->csStats);
 
 	int err = WSARecvFrom(
-		lpServerInfo->Socket,
+		lpRequestInfo->Socket,
 		&wsaBuf,
 		1,
 		NULL,
@@ -27,32 +36,63 @@ BOOL ServerPostReceive(LPREQUEST_INFO lpRequestInfo)
 	if (err == 0)
 	{
 		// completed directly, do we need to do anything here?
-		printf(__FUNCTION__ " - WARNING - WSARecvFrom completed directly\n");
+#ifdef __LOG_SERVER_IO
+		LoggerWrite(
+			__FUNCTION__ " - WARNING - WSARecvFrom completed directly - Socket: %u, lpRequest: %08x, IOMode: %s, target: %s",
+			lpRequestInfo->Socket,
+			(ULONG_PTR)lpRequestInfo,
+			GetIOMode(lpRequestInfo->IOMode),
+			addrtext);
+#endif // __LOG_SERVER_IO
 		return TRUE;
 	}
 
 	DWORD dwError = WSAGetLastError();
 
 	if (dwError == WSA_IO_PENDING)
+	{
+#ifdef __LOG_SERVER_IO
+		LoggerWrite(
+			__FUNCTION__ " - Posted WSARecvFrom - Socket: %u, lpRequest: %08x, IOMode: %s, target: %s",
+			lpRequestInfo->Socket,
+			(ULONG_PTR)lpRequestInfo,
+			GetIOMode(lpRequestInfo->IOMode),
+			addrtext);
+#endif // __LOG_SERVER_IO
 		return TRUE;
+	}
 
-	printf(__FUNCTION__ " - WSARecvFrom returned %d, code: %u - %s\n", err, dwError, GetErrorMessage(dwError));
+	EnterCriticalSection(&lpServerInfo->csStats);
+	if (!ArrayContainerDeleteElementByValue(lpServerInfo->lpPendingWSARecvFrom, lpRequestInfo))
+		Error(__FUNCTION__ " - %08x - %s not found in lpPendingWSARecvFrom", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
+	LeaveCriticalSection(&lpServerInfo->csStats);
+
+	Error(__FUNCTION__ " - [ERROR] WSARecvFrom [%s] returned %d, code: %u - %s", addrtext, err, dwError, GetErrorMessage(dwError));
 
 	return FALSE;
 }
 
-BOOL ServerPostSend(LPREQUEST_INFO lpRequestInfo)
+BOOL PostSend(LPREQUEST_INFO lpRequestInfo, int IOMode)
 {
+#ifdef __LOG_SERVER_IO
+	char addrtext[16];
+	GetIPFromSocketAddress(&lpRequestInfo->SocketAddress, addrtext, sizeof(addrtext));
+#endif // __LOG_SERVER_IO
+
 	LPSERVER_INFO lpServerInfo = lpRequestInfo->lpServerInfo;
 
 	WSABUF wsaBuf;
 	wsaBuf.buf = lpRequestInfo->Buffer;
 	wsaBuf.len = lpRequestInfo->dwLength;
 
-	lpRequestInfo->IOMode = NIO_SEND;
+	lpRequestInfo->IOMode = IOMode;
+
+	EnterCriticalSection(&lpServerInfo->csStats);
+	ASSERT(ArrayContainerAddElement(lpServerInfo->lpPendingWSASendTo, lpRequestInfo));
+	LeaveCriticalSection(&lpServerInfo->csStats);
 
 	int err = WSASendTo(
-		lpServerInfo->Socket,
+		lpRequestInfo->Socket,
 		&wsaBuf,
 		1,
 		NULL,
@@ -65,16 +105,38 @@ BOOL ServerPostSend(LPREQUEST_INFO lpRequestInfo)
 	if (err == 0)
 	{
 		// completed directly, do we need to do anything here?
-		printf(__FUNCTION__ " - WARNING - WSASendTo completed directly\n");
+#ifdef __LOG_SERVER_IO
+		LoggerWrite(
+			__FUNCTION__ " - WARNING - WSASendTo completed directly - Socket: %u, lpRequest: %08x, IOMode: %s, target: %s",
+			lpRequestInfo->Socket,
+			(ULONG_PTR)lpRequestInfo,
+			GetIOMode(lpRequestInfo->IOMode),
+			addrtext);
+#endif // __LOG_SERVER_IO
 		return TRUE;
 	}
 
 	DWORD dwError = WSAGetLastError();
 
 	if (dwError == WSA_IO_PENDING)
+	{
+#ifdef __LOG_SERVER_IO
+		LoggerWrite(
+			__FUNCTION__ " - Posted WSASendTo - Socket: %u, lpRequest: %08x, IOMode: %s, target: %s",
+			lpRequestInfo->Socket,
+			(ULONG_PTR)lpRequestInfo,
+			GetIOMode(lpRequestInfo->IOMode),
+			addrtext);
+#endif // __LOG_SERVER_IO
 		return TRUE;
+	}
 
-	printf(__FUNCTION__ " - WSASendTo returned %d, code: %u - %s\n", err, dwError, GetErrorMessage(dwError));
+	EnterCriticalSection(&lpServerInfo->csStats);
+	if (!ArrayContainerDeleteElementByValue(lpServerInfo->lpPendingWSASendTo, lpRequestInfo))
+		Error(__FUNCTION__ " - %08x - %s not found in lpPendingWSASendTo", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
+	LeaveCriticalSection(&lpServerInfo->csStats);
+
+	Error(__FUNCTION__ " - [ERROR] WSASendTo [%s] returned %d, code: %u - %s", addrtext, err, dwError, GetErrorMessage(dwError));
 
 	return FALSE;
 }
@@ -86,6 +148,10 @@ DWORD WINAPI ServerIOHandler(LPVOID lp)
 	LPREQUEST_INFO lpRequestInfo;
 	DWORD dwBytesTransferred;
 	ULONG_PTR ulCompletionKey;
+
+#ifdef __LOG_SERVER_IO
+	char addrtext[16];
+#endif // __LOG_SERVER_IO
 
 	for (;;)
 	{
@@ -105,21 +171,49 @@ DWORD WINAPI ServerIOHandler(LPVOID lp)
 			case ERROR_OPERATION_ABORTED:
 				if (lpRequestInfo)
 				{
-					printf(
-						__FUNCTION__ " - I/O request %08x canceled, IOMode: %s\n",
+#ifdef __LOG_SERVER_IO
+					LoggerWrite(
+						__FUNCTION__ " - I/O request %08x canceled, IOMode: %s, Socket: %u",
 						(ULONG_PTR)lpRequestInfo,
-						lpRequestInfo->IOMode == NIO_RECV ? "NIO_RECV" : "NIO_SEND");
+						GetIOMode(lpRequestInfo->IOMode),
+						lpRequestInfo->Socket);
+#endif // __LOG_SERVER_IO
+
+					switch (lpRequestInfo->IOMode)
+					{
+					case IO_RECV:
+					case IO_RELAY_RECV:
+						EnterCriticalSection(&lpServerInfo->csStats);
+						if (!ArrayContainerDeleteElementByValue(lpServerInfo->lpPendingWSARecvFrom, lpRequestInfo))
+							Error(__FUNCTION__ " - %08x - %s not found in lpPendingWSARecvFrom", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
+						LeaveCriticalSection(&lpServerInfo->csStats);
+						break;
+					case IO_SEND:
+					case IO_RELAY_SEND:
+						EnterCriticalSection(&lpServerInfo->csStats);
+						if (!ArrayContainerDeleteElementByValue(lpServerInfo->lpPendingWSASendTo, lpRequestInfo))
+							Error(__FUNCTION__ " - %08x - %s not found in lpPendingWSASendTo", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
+						LeaveCriticalSection(&lpServerInfo->csStats);
+						break;
+					}
+
+					if (lpRequestInfo->lpInnerRequest)
+					{
+						DestroyRequestInfo(lpRequestInfo->lpInnerRequest);
+						lpRequestInfo->lpInnerRequest = NULL;
+					}
 					DestroyRequestInfo(lpRequestInfo);
 				}
 				break;
 			default:
-				printf(
+				Error(
 					__FUNCTION__ " - GetQueuedCompletionStatus returned FALSE, code: %u "
-					"(dwBytesTransferred: %d, ulCompletionKey: %u, lpRequestInfo: %08x)\n%s\n",
+					"(dwBytesTransferred: %d, ulCompletionKey: %u, lpRequestInfo: %08x, Socket: %u)\r\n%s",
 					GetLastError(),
 					dwBytesTransferred,
 					ulCompletionKey,
 					(ULONG_PTR)lpRequestInfo,
+					lpRequestInfo->Socket,
 					GetErrorMessage(GetLastError()));
 				break;
 			}
@@ -130,26 +224,84 @@ DWORD WINAPI ServerIOHandler(LPVOID lp)
 		if (dwBytesTransferred == 0 &&
 			ulCompletionKey == 0 &&
 			lpRequestInfo == NULL)
-			break;
+			break; // the owner is killing all ServerIO threads
 
-		printf(
-			__FUNCTION__ " - dwBytesTransferred: %u, ulCompletionKey: %u, lpRequestInfo: %08x, IOMode: %s\n",
+#ifdef __LOG_SERVER_IO
+		GetIPFromSocketAddress(&lpRequestInfo->SocketAddress, addrtext, sizeof(addrtext));
+
+		LoggerWrite(
+			__FUNCTION__ " - dwBytesTransferred: %u, ulCompletionKey: %u, lpRequestInfo: %08x, IOMode: %s, Socket: %u [from %s]",
 			dwBytesTransferred,
 			ulCompletionKey,
 			(ULONG_PTR)lpRequestInfo,
-			lpRequestInfo->IOMode == NIO_RECV ? "NIO_RECV" : "NIO_SEND");
+			GetIOMode(lpRequestInfo->IOMode),
+			lpRequestInfo->Socket,
+			addrtext);
+#endif // __LOG_SERVER_IO
 
-		if (lpRequestInfo->IOMode == NIO_RECV)
+		switch (lpRequestInfo->IOMode)
 		{
-			RequestHandlerPostRequest(AllocateRequestInfo(lpServerInfo, lpRequestInfo));
+		case IO_RECV:
+			EnterCriticalSection(&lpServerInfo->csStats);
+			if (!ArrayContainerDeleteElementByValue(lpServerInfo->lpPendingWSARecvFrom, lpRequestInfo))
+				Error(__FUNCTION__ " - %08x - %s not found in lpPendingWSARecvFrom", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
+			LeaveCriticalSection(&lpServerInfo->csStats);
 
-			ServerPostReceive(lpRequestInfo);
-		}
-		else
-		{
+			lpRequestInfo->dwLength = dwBytesTransferred;
+			RequestHandlerPostRequest(CopyRequestInfo(lpRequestInfo));
+
+			PostReceive(lpRequestInfo, IO_RECV);
+			break;
+		case IO_RELAY_RECV: // route packet to the initial client
+			EnterCriticalSection(&lpServerInfo->csStats);
+			if (!ArrayContainerDeleteElementByValue(lpServerInfo->lpPendingWSARecvFrom, lpRequestInfo))
+				Error(__FUNCTION__ " - %08x - %s not found in lpPendingWSARecvFrom", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
+			LeaveCriticalSection(&lpServerInfo->csStats);
+
+			lpRequestInfo->dwLength = dwBytesTransferred;
+
+			if (lpRequestInfo->lpInnerRequest)
+			{
+				lpRequestInfo->SockAddrLen = sizeof(lpRequestInfo->SocketAddress);
+				CopyMemory(&lpRequestInfo->SocketAddress, &lpRequestInfo->lpInnerRequest->SocketAddress, sizeof(SOCKADDR_IN));
+
+#ifdef __LOG_ALLOCATIONS
+				LoggerWrite(__FUNCTION__ " [IO_RELAY_RECV]- Destroyed inner %s lpRequestInfo : %08x", GetIOMode(lpRequestInfo->lpInnerRequest->IOMode), (ULONG_PTR)lpRequestInfo->lpInnerRequest);
+#endif // __LOG_ALLOCATIONS
+				DestroyRequestInfo(lpRequestInfo->lpInnerRequest);
+				lpRequestInfo->lpInnerRequest = NULL;
+
+				PostSend(lpRequestInfo, IO_SEND);
+			}
+			else
+			{
+				Error(__FUNCTION__ " - (%08x %s) lpInnerRequest is NULL!", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
+#ifdef __LOG_ALLOCATIONS
+				LoggerWrite(__FUNCTION__ " - Destroyed %s lpRequestInfo : %08x", GetIOMode(lpRequestInfo->IOMode), (ULONG_PTR)lpRequestInfo);
+#endif // __LOG_ALLOCATIONS
+				DestroyRequestInfo(lpRequestInfo);
+			}
+			break;
+		case IO_SEND:
+		case IO_RELAY_SEND:
+			EnterCriticalSection(&lpServerInfo->csStats);
+			if (!ArrayContainerDeleteElementByValue(lpServerInfo->lpPendingWSASendTo, lpRequestInfo))
+				Error(__FUNCTION__ " - %08x - %s not found in lpPendingWSASendTo", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
+			LeaveCriticalSection(&lpServerInfo->csStats);
 			// this was a completed send request
-			printf(__FUNCTION__ " - Destroyed NIO_SEND lpRequestInfo : %08x\n", (ULONG_PTR)lpRequestInfo);
+#ifdef __LOG_ALLOCATIONS
+			LoggerWrite(__FUNCTION__ " - Destroyed %s lpRequestInfo : %08x", GetIOMode(lpRequestInfo->IOMode), (ULONG_PTR)lpRequestInfo);
+#endif // __LOG_ALLOCATIONS
+			if (lpRequestInfo->lpInnerRequest)
+			{
+#ifdef __LOG_ALLOCATIONS
+				LoggerWrite(__FUNCTION__ " [EXTRA]- Destroyed inner %s lpRequestInfo : %08x", GetIOMode(lpRequestInfo->lpInnerRequest->IOMode), (ULONG_PTR)lpRequestInfo->lpInnerRequest);
+#endif // __LOG_ALLOCATIONS
+				DestroyRequestInfo(lpRequestInfo->lpInnerRequest);
+				lpRequestInfo->lpInnerRequest = NULL;
+			}
 			DestroyRequestInfo(lpRequestInfo);
+			break;
 		}
 	}
 

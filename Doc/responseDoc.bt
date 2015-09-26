@@ -1,0 +1,49 @@
+//--------------------------------------
+//--- 010 Editor v6.0.2 Binary Template
+//
+// File:
+// Author:
+// Revision:
+// Purpose:
+//--------------------------------------
+
+struct DomainLabel
+{
+    byte Length;
+    if (Length > 0)
+    {
+        char Data[Length];
+    }
+};
+
+BigEndian();
+
+ushort TransactionID;
+ushort Flags;
+ushort NumberOfQuestions;
+ushort NumberOfAnswers;
+ushort NumberOfAuthorities;
+ushort NumberOfAdditional;
+
+struct
+{
+    while(true)
+    {
+        DomainLabel label;
+        if (label.Length == 0)
+            break;
+    }
+
+    ushort QuestionType;
+    ushort QuestionClass;
+} Questions[NumberOfQuestions];
+
+struct
+{
+    ushort Name;
+    ushort Type;
+    ushort Class;
+    uint   TimeToLive;
+    ushort DataLength;
+    byte   IP[DataLength] <format=hex>;
+} Answers[NumberOfAnswers];

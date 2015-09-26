@@ -8,6 +8,9 @@
     <Filter Include="Source Files\Server">
       <UniqueIdentifier>{c6f16c13-0b0c-4a74-9134-01106d120fdd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Logger">
+      <UniqueIdentifier>{49845252-7ff3-4f3f-ac1b-16836c91154a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StdAfx.h">
@@ -22,6 +25,10 @@
     <ClInclude Include="Utilities.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="Logger\Logger.h">
+      <Filter>Source Files\Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="Definitions.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.c">
@@ -42,5 +49,20 @@
     <ClCompile Include="Server\Allocation.c">
       <Filter>Source Files\Server</Filter>
     </ClCompile>
+    <ClCompile Include="Server\DnsResolve.c">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="Logger\Logger.c">
+      <Filter>Source Files\Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="Server\SocketPool.c">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="Server\RequestTimeoutHandler.c">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Todo.txt" />
   </ItemGroup>
 </Project>

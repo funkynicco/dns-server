@@ -14,20 +14,34 @@ void PostRequest(SOCKET Socket, LPSOCKADDR_IN lpServerAddr, const char* domain)
 
 	header.TransactionID = htons(1337);
 	header.NumberOfQuestions = htons(1);
+	header.Flags = htons(0x0100);
 
 	char buffer[1024];
 	char* ptr = buffer;
 
 	memcpy(ptr, &header, sizeof(DNS_HEADER)); ptr += sizeof(DNS_HEADER);
 
-	ptr += sprintf(ptr, "\x04test\x03hue\x03com");
-	*((u_short*)ptr) = 0; ptr += 2; // question type
-	*((u_short*)ptr) = 0; ptr += 2; // question class
+#define ADD_LABEL(__ptr, __label) { size_t __label_len = strlen(__label); *ptr++ = (BYTE)__label_len; memcpy(__ptr, __label, __label_len); __ptr += __label_len; }
+
+	// test.hue.com
+	//ADD_LABEL(ptr, "test");
+	ADD_LABEL(ptr, "microsoft");
+	ADD_LABEL(ptr, "com");
+
+	*ptr++ = 0; // must end the labels with \0
+	*((u_short*)ptr) = htons(1); ptr += 2; // question type
+	*((u_short*)ptr) = htons(1); ptr += 2; // question class
 
 	int sent = sendto(Socket, buffer, ptr - buffer, 0, (LPSOCKADDR)lpServerAddr, sizeof(SOCKADDR_IN));
 	if (sent <= 0)
 	{
 		printf("Failed to send request, code: %u\n", WSAGetLastError());
+		return;
+	}
+
+	if (sent < (ptr - buffer))
+	{
+		printf("Failed to send all %u bytes!\n", (ptr - buffer));
 		return;
 	}
 
@@ -59,6 +73,19 @@ void PostRequest(SOCKET Socket, LPSOCKADDR_IN lpServerAddr, const char* domain)
 			if (len > 0)
 			{
 				printf("Received %d bytes from DNS server\n", len);
+				for (int i = 0; i < len; ++i)
+				{
+					if (i > 0)
+					{
+						if (i % 16 == 0)
+							printf("\n");
+						else
+							printf(" ");
+					}
+
+					printf("%02x", (unsigned char)buffer[i]);
+				}
+				printf("\n");
 				ReadResponse(buffer, len);
 			}
 			else
@@ -66,6 +93,27 @@ void PostRequest(SOCKET Socket, LPSOCKADDR_IN lpServerAddr, const char* domain)
 
 			break;
 		}
+	}
+}
+
+void PrintOperationTime(double value)
+{
+	int n = 0;
+	while (value < 1.0)
+	{
+		value *= 1000.0;
+		++n;
+	}
+
+	switch (n)
+	{
+	case 0: printf("Operation took %.3f seconds\n", value); break;
+	case 1: printf("Operation took %.3f milliseconds\n", value); break;
+	case 2: printf("Operation took %.3f microseconds\n", value); break;
+	case 3: printf("Operation took %.3f nanoseconds\n", value); break;
+	default:
+		printf(__FUNCTION__ " - ERROR, n: %d\n", n);
+		break;
 	}
 }
 
@@ -78,8 +126,11 @@ int main(int argc, char* argv[])
 
 	SOCKADDR_IN ServerAddr;
 	ServerAddr.sin_family = AF_INET;
-	ServerAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-	ServerAddr.sin_port = htons(53);
+	ServerAddr.sin_addr.s_addr = inet_addr("127.0.0.1"); //inet_addr("8.8.8.8");
+	ServerAddr.sin_port = htons(5666);
+
+	LARGE_INTEGER liFrequency, liStart, liEnd;
+	QueryPerformanceFrequency(&liFrequency);
 
 	SOCKET Socket = socket(AF_INET, SOCK_DGRAM, 0);
 	if (Socket != INVALID_SOCKET)
@@ -99,7 +150,10 @@ int main(int argc, char* argv[])
 					bShutdown = TRUE;
 					break;
 				case VK_SPACE:
+					QueryPerformanceCounter(&liStart);
 					PostRequest(Socket, &ServerAddr, "google.com");
+					QueryPerformanceCounter(&liEnd);
+					PrintOperationTime((double)(liEnd.QuadPart - liStart.QuadPart) / liFrequency.QuadPart);
 					break;
 				}
 			}

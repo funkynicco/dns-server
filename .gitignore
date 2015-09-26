@@ -5,3 +5,4 @@ Release/
 *.sdf
 *.user
 *.suo
+/DnsServerTest/Logs

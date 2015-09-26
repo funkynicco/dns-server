@@ -71,3 +71,52 @@ LPCSTR GetErrorMessage(DWORD dwError)
 	
 	return g_internalErrorMessageBuffer;
 }
+
+void AssembleDomainFromLabels(LPSTR lpOutput, char aLabels[16][64], DWORD dwNumLabels)
+{
+	for (DWORD i = 0; i < dwNumLabels; ++i)
+	{
+		if (i > 0)
+			*lpOutput++ = '.';
+
+		size_t len = strlen(aLabels[i]);
+		memcpy(lpOutput, aLabels[i], len); lpOutput += len;
+	}
+
+	*lpOutput = 0;
+}
+
+LPCSTR GetIOMode(int IOMode)
+{
+	switch (IOMode)
+	{
+	case IO_RECV: return "IO_RECV";
+	case IO_SEND: return "IO_SEND";
+	case IO_RELAY_RECV: return "IO_RELAY_RECV";
+	case IO_RELAY_SEND: return "IO_RELAY_SEND";
+	}
+
+	return "E_UNKNOWN_IO_MODE";
+}
+
+DWORD CriticalSectionIncrementValue(LPCRITICAL_SECTION lpCriticalSection, LPDWORD lpdwValue)
+{
+	DWORD dwResult;
+	
+	EnterCriticalSection(lpCriticalSection);
+	dwResult = ++(*lpdwValue);
+	LeaveCriticalSection(lpCriticalSection);
+
+	return dwResult;
+}
+
+DWORD CriticalSectionDecrementValue(LPCRITICAL_SECTION lpCriticalSection, LPDWORD lpdwValue)
+{
+	DWORD dwResult;
+
+	EnterCriticalSection(lpCriticalSection);
+	dwResult = --(*lpdwValue);
+	LeaveCriticalSection(lpCriticalSection);
+
+	return dwResult;
+}

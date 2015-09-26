@@ -4,8 +4,10 @@
 
 enum
 {
-	NIO_RECV,
-	NIO_SEND
+	IO_RECV,
+	IO_SEND,
+	IO_RELAY_RECV,
+	IO_RELAY_SEND
 };
 
 typedef struct _tagDnsHeader
@@ -31,6 +33,8 @@ typedef struct _tagDnsHeader
 
 } DNS_HEADER, *LPDNS_HEADER;
 
+typedef struct _tagRequestTimeoutHandler REQUEST_TIMEOUT_HANDLER, *LPREQUEST_TIMEOUT_HANDLER;
+
 typedef struct _tagRequestInfo
 {
 	WSAOVERLAPPED Overlapped;
@@ -44,6 +48,9 @@ typedef struct _tagRequestInfo
 	DWORD dwFlags;
 
 	int IOMode;
+	SOCKET Socket;
+
+	struct _tagRequestInfo* lpInnerRequest;
 
 	struct _tagRequestInfo* next;
 
@@ -68,12 +75,30 @@ typedef struct _tagServerInfo
 	DWORD dwAllocatedRequests;
 	CRITICAL_SECTION csAllocRequest;
 
+	//DWORD dwPendingWSARecvFrom;
+	//DWORD dwPendingWSASendTo;
+	LPARRAY_CONTAINER lpPendingWSARecvFrom;
+	LPARRAY_CONTAINER lpPendingWSASendTo;
+	LPARRAY_CONTAINER lpAllocatedRequests;
+	CRITICAL_SECTION csStats;
+
+	LPREQUEST_TIMEOUT_HANDLER lpRequestTimeoutHandler;
+
 	// Network server
 	HANDLE hNetworkIocp;
 	HANDLE hNetworkThreads[MAX_THREADS];
 	DWORD dwNumberOfNetworkThreads;
 
 } SERVER_INFO, *LPSERVER_INFO;
+
+/***************************************************************************************
+* RequestTimeoutHandler
+***************************************************************************************/
+LPREQUEST_TIMEOUT_HANDLER RequestTimeoutCreate();
+void RequestTimeoutDestroy(LPREQUEST_TIMEOUT_HANDLER lpHandler);
+void RequestTimeoutSetCancelTimeout(LPREQUEST_TIMEOUT_HANDLER lpHandler, LPREQUEST_INFO lpRequestInfo, time_t tmTimeout);
+void RequestTimeoutRemoveRequest(LPREQUEST_TIMEOUT_HANDLER lpHandler, LPREQUEST_INFO lpRequestInfo);
+void RequestTimeoutProcess(LPREQUEST_TIMEOUT_HANDLER lpHandler);
 
 /***************************************************************************************
  * Allocation.c
@@ -83,7 +108,8 @@ LPSERVER_INFO		AllocateServerInfo();
 void				DestroyServerInfo(LPSERVER_INFO lpServerInfo);
 
 // If lpCopyOriginal is not NULL then it will copy all values from lpCopyOriginal into a new instance
-LPREQUEST_INFO		AllocateRequestInfo(LPSERVER_INFO lpServerInfo, LPREQUEST_INFO lpCopyOriginal);
+LPREQUEST_INFO		AllocateRequestInfo(LPSERVER_INFO lpServerInfo, SOCKET Socket);
+LPREQUEST_INFO		CopyRequestInfo(LPREQUEST_INFO lpOriginalRequestInfo);
 void				DestroyRequestInfo(LPREQUEST_INFO lpRequestInfo);
 
 /***************************************************************************************
@@ -92,7 +118,6 @@ void				DestroyRequestInfo(LPREQUEST_INFO lpRequestInfo);
 
 BOOL StartServer(LPSERVER_INFO lpServerInfo, int port);
 void StopServer(LPSERVER_INFO lpServerInfo);
-void ProcessServer(LPSERVER_INFO lpServerInfo);
 
 /***************************************************************************************
  * RequestHandler.c
@@ -107,5 +132,23 @@ void RequestHandlerPostRequest(LPREQUEST_INFO lpRequestInfo);
  * ServerIO.c
  ***************************************************************************************/
 
-BOOL ServerPostReceive(LPREQUEST_INFO lpRequestInfo);
-BOOL ServerPostSend(LPREQUEST_INFO lpRequestInfo);
+BOOL PostReceive(LPREQUEST_INFO lpRequestInfo, int IOMode);
+BOOL PostSend(LPREQUEST_INFO lpRequestInfo, int IOMode);
+
+/***************************************************************************************
+ * DnsResolve.c
+ ***************************************************************************************/
+
+BOOL InitializeDnsResolver(LPSERVER_INFO lpServerInfo);
+void DestroyDnsResolver();
+void ResolveDns(LPREQUEST_INFO lpRequestInfo);
+
+/***************************************************************************************
+ * SocketPool.c
+ ***************************************************************************************/
+// Safely destroys a socket from the socket pool
+#define SOCKETPOOL_SAFE_DESTROY(_Socket) if ((_Socket) != INVALID_SOCKET) { DestroySocket(_Socket); (_Socket) = INVALID_SOCKET; }
+void   InitializeSocketPool();
+void   DestroySocketPool();
+SOCKET AllocateSocket();
+void   DestroySocket(SOCKET Socket);
