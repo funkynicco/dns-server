@@ -20,6 +20,7 @@
 
 #include "Logger\Logger.h"
 #include "ArrayContainer.h"
+#include "PtrMap.h"
 #include "Utilities.h"
 
 #include "Server\Server.h"

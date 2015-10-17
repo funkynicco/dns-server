@@ -162,6 +162,7 @@
     <ClInclude Include="ArrayContainer.h" />
     <ClInclude Include="Definitions.h" />
     <ClInclude Include="Logger\Logger.h" />
+    <ClInclude Include="PtrMap.h" />
     <ClInclude Include="Server\Server.h" />
     <ClInclude Include="StdAfx.h" />
     <ClInclude Include="Utilities.h" />

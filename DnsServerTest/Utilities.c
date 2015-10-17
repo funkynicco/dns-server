@@ -132,6 +132,11 @@ DWORD CriticalSectionDecrementValue(LPCRITICAL_SECTION lpCriticalSection, LPDWOR
 void GetFrequencyCounterResult(LPSTR lpOutput, LARGE_INTEGER liFrequency, LARGE_INTEGER liStart, LARGE_INTEGER liEnd)
 {
 	double value = (double)(liEnd.QuadPart - liStart.QuadPart) / liFrequency.QuadPart;
+	if (value <= 0)
+	{
+		strcpy(lpOutput, "0 nanoseconds");
+		return;
+	}
 
 	int n = 0;
 	while (value < 1.0)
@@ -155,7 +160,7 @@ void GetFrequencyCounterResult(LPSTR lpOutput, LARGE_INTEGER liFrequency, LARGE_
 		break;
 	case 1: sprintf(lpOutput, "%.3f milliseconds", value); break;
 	case 2: sprintf(lpOutput, "%.3f microseconds", value); break;
-	case 3: sprintf(lpOutput, "%.3f nanoseconds", value); break;
+	case 3: sprintf(lpOutput, "%.0f nanoseconds", value); break;
 	default:
 		sprintf(lpOutput, "ERR n:%d", n);
 		break;
