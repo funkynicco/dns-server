@@ -88,7 +88,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
     </ClCompile>
@@ -119,7 +119,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -147,25 +147,35 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Logger\Logger.c" />
-    <ClCompile Include="Server\Allocation.c" />
-    <ClCompile Include="Server\DnsResolve.c" />
-    <ClCompile Include="Server\RequestHandler.c" />
-    <ClCompile Include="Main.c" />
-    <ClCompile Include="Server\RequestTimeoutHandler.c" />
-    <ClCompile Include="Server\Server.c" />
-    <ClCompile Include="Server\ServerIO.c" />
-    <ClCompile Include="Server\SocketPool.c" />
-    <ClCompile Include="Utilities.c" />
+    <ClCompile Include="Source\Configuration\Configuration.c" />
+    <ClCompile Include="Source\Logger\Logger.c" />
+    <ClCompile Include="Source\DNS\DnsAllocation.c" />
+    <ClCompile Include="Source\DNS\DnsResolve.c" />
+    <ClCompile Include="Source\DNS\DnsRequestHandler.c" />
+    <ClCompile Include="Source\Main.c" />
+    <ClCompile Include="Source\DNS\DnsRequestTimeoutHandler.c" />
+    <ClCompile Include="Source\DNS\DnsServer.c" />
+    <ClCompile Include="Source\DNS\DnsServerIO.c" />
+    <ClCompile Include="Source\Networking\SocketPool.c" />
+    <ClCompile Include="Source\Utilities\Utilities.c" />
+    <ClCompile Include="Source\Utilities\Scanner.c" />
+    <ClCompile Include="Source\Web\WebAllocation.c" />
+    <ClCompile Include="Source\Web\WebServer.c" />
+    <ClCompile Include="Source\Web\WebServerIO.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ArrayContainer.h" />
-    <ClInclude Include="Definitions.h" />
-    <ClInclude Include="Logger\Logger.h" />
-    <ClInclude Include="PtrMap.h" />
-    <ClInclude Include="Server\Server.h" />
-    <ClInclude Include="StdAfx.h" />
-    <ClInclude Include="Utilities.h" />
+    <ClInclude Include="Source\Containers\ArrayContainer.h" />
+    <ClInclude Include="Source\Configuration\Configuration.h" />
+    <ClInclude Include="Source\Definitions.h" />
+    <ClInclude Include="Source\DNS\DnsServer.h" />
+    <ClInclude Include="Source\Logger\Logger.h" />
+    <ClInclude Include="Source\Networking\NetworkDefines.h" />
+    <ClInclude Include="Source\Networking\SocketPool.h" />
+    <ClInclude Include="Source\Containers\PtrMap.h" />
+    <ClInclude Include="Source\StdAfx.h" />
+    <ClInclude Include="Source\Utilities\Utilities.h" />
+    <ClInclude Include="Source\Utilities\Scanner.h" />
+    <ClInclude Include="Source\Web\WebServer.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Todo.txt" />

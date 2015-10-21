@@ -1,70 +1,118 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
+    <Filter Include="Source">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="Source Files\Server">
-      <UniqueIdentifier>{c6f16c13-0b0c-4a74-9134-01106d120fdd}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Logger">
+    <Filter Include="Source\Logger">
       <UniqueIdentifier>{49845252-7ff3-4f3f-ac1b-16836c91154a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Proxy">
+      <UniqueIdentifier>{bdb00206-a801-4cc4-b76c-35f08ad32962}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\DNS">
+      <UniqueIdentifier>{c6f16c13-0b0c-4a74-9134-01106d120fdd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Networking">
+      <UniqueIdentifier>{ec33ed0f-688c-43b9-831d-7fd3334524a3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Utilities">
+      <UniqueIdentifier>{48be364a-309d-402d-938c-776902d70b25}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Containers">
+      <UniqueIdentifier>{4b726be4-71db-4105-b593-a502fc31f0ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Configuration">
+      <UniqueIdentifier>{0901ca6c-f4d9-43a6-ad9f-4b7fe251e1dd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Web">
+      <UniqueIdentifier>{a77aa745-8747-439c-868e-1642b2d212e2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="StdAfx.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="Source\Logger\Logger.h">
+      <Filter>Source\Logger</Filter>
     </ClInclude>
-    <ClInclude Include="ArrayContainer.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="Source\StdAfx.h">
+      <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="Server\Server.h">
-      <Filter>Source Files\Server</Filter>
+    <ClInclude Include="Source\Definitions.h">
+      <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="Utilities.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="Source\Utilities\Scanner.h">
+      <Filter>Source\Utilities</Filter>
     </ClInclude>
-    <ClInclude Include="Logger\Logger.h">
-      <Filter>Source Files\Logger</Filter>
+    <ClInclude Include="Source\Networking\SocketPool.h">
+      <Filter>Source\Networking</Filter>
     </ClInclude>
-    <ClInclude Include="Definitions.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="Source\Containers\ArrayContainer.h">
+      <Filter>Source\Containers</Filter>
     </ClInclude>
-    <ClInclude Include="PtrMap.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="Source\Containers\PtrMap.h">
+      <Filter>Source\Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Configuration\Configuration.h">
+      <Filter>Source\Configuration</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Utilities\Utilities.h">
+      <Filter>Source\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DNS\DnsServer.h">
+      <Filter>Source\DNS</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Networking\NetworkDefines.h">
+      <Filter>Source\Networking</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Web\WebServer.h">
+      <Filter>Source\Web</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Main.c">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Source\Main.c">
+      <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Server\Server.c">
-      <Filter>Source Files\Server</Filter>
+    <ClCompile Include="Source\Logger\Logger.c">
+      <Filter>Source\Logger</Filter>
     </ClCompile>
-    <ClCompile Include="Server\RequestHandler.c">
-      <Filter>Source Files\Server</Filter>
+    <ClCompile Include="Source\DNS\DnsResolve.c">
+      <Filter>Source\DNS</Filter>
     </ClCompile>
-    <ClCompile Include="Utilities.c">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Source\Utilities\Scanner.c">
+      <Filter>Source\Utilities</Filter>
     </ClCompile>
-    <ClCompile Include="Server\ServerIO.c">
-      <Filter>Source Files\Server</Filter>
+    <ClCompile Include="Source\Networking\SocketPool.c">
+      <Filter>Source\Networking</Filter>
     </ClCompile>
-    <ClCompile Include="Server\Allocation.c">
-      <Filter>Source Files\Server</Filter>
+    <ClCompile Include="Source\Configuration\Configuration.c">
+      <Filter>Source\Configuration</Filter>
     </ClCompile>
-    <ClCompile Include="Server\DnsResolve.c">
-      <Filter>Source Files\Server</Filter>
+    <ClCompile Include="Source\Utilities\Utilities.c">
+      <Filter>Source\Utilities</Filter>
     </ClCompile>
-    <ClCompile Include="Logger\Logger.c">
-      <Filter>Source Files\Logger</Filter>
+    <ClCompile Include="Source\DNS\DnsServer.c">
+      <Filter>Source\DNS</Filter>
     </ClCompile>
-    <ClCompile Include="Server\SocketPool.c">
-      <Filter>Source Files\Server</Filter>
+    <ClCompile Include="Source\DNS\DnsServerIO.c">
+      <Filter>Source\DNS</Filter>
     </ClCompile>
-    <ClCompile Include="Server\RequestTimeoutHandler.c">
-      <Filter>Source Files\Server</Filter>
+    <ClCompile Include="Source\DNS\DnsRequestHandler.c">
+      <Filter>Source\DNS</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DNS\DnsRequestTimeoutHandler.c">
+      <Filter>Source\DNS</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DNS\DnsAllocation.c">
+      <Filter>Source\DNS</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Web\WebServer.c">
+      <Filter>Source\Web</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Web\WebAllocation.c">
+      <Filter>Source\Web</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Web\WebServerIO.c">
+      <Filter>Source\Web</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
