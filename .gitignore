@@ -6,3 +6,8 @@ Release/
 *.user
 *.suo
 /DnsServerTest/Logs
+
+/DnsServerTest/Todo.txt
+/DnsServerTest/config.cfg
+
+*.aps
