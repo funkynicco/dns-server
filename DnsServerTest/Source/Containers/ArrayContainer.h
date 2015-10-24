@@ -1,5 +1,20 @@
 #pragma once
 
+#define SafeArrayContainerAddElement(_CriticalSection, _Array, _Value) \
+{ \
+	EnterCriticalSection(_CriticalSection); \
+	ASSERT(ArrayContainerAddElement(_Array, _Value)); \
+	LeaveCriticalSection(_CriticalSection); \
+}
+
+#define SafeArrayContainerDeleteElementByValue(_CriticalSection, _Array, _Value) \
+{ \
+	EnterCriticalSection(_CriticalSection); \
+	if (!ArrayContainerDeleteElementByValue(_Array, _Value)) \
+		Error(__FUNCTION__ " - %08x not found in " #_Array, (ULONG_PTR)_Value); \
+	LeaveCriticalSection(_CriticalSection); \
+}
+
 typedef struct _tagArrayContainer
 {
 	BOOL bSelfAllocated;
@@ -49,7 +64,34 @@ static void ArrayContainerDestroy(LPARRAY_CONTAINER lpArray)
 static BOOL ArrayContainerAddElement(LPARRAY_CONTAINER lpArray, LPVOID lpElem)
 {
 	if (lpArray->dwElementNum == lpArray->dwCapacity)
-		return FALSE;
+	{
+		if (!lpArray->bSelfAllocated)
+			return FALSE;
+
+		// increase capacity
+		DWORD dwNewCapacity = lpArray->dwCapacity * 2;
+		if (dwNewCapacity - lpArray->dwCapacity > 4096)
+			dwNewCapacity = lpArray->dwCapacity + 4096;
+
+		DWORD dwNewSize = sizeof(DWORD) * 3 + (sizeof(void*) * dwNewCapacity);
+		LPARRAY_CONTAINER lpNewArray = (LPARRAY_CONTAINER)malloc(dwNewSize); //(LPARRAY_CONTAINER)realloc(lpArray, dwNewSize);
+		if (!lpNewArray)
+			return FALSE;
+
+		CopyMemory(lpNewArray, lpArray, lpArray->dwSize);
+		lpNewArray->dwSize = dwNewSize;
+		lpNewArray->dwCapacity = dwNewCapacity;
+
+#ifdef _DEBUG
+		LoggerWrite(__FUNCTION__ " - Reallocated %08x => %08x, added %u new elements",
+			(ULONG_PTR)lpArray,
+			(ULONG_PTR)lpNewArray,
+			dwNewCapacity - lpArray->dwCapacity);
+#endif // _DEBUG
+
+		free(lpArray);
+		lpArray = lpNewArray;
+	}
 
 	lpArray->Elem[lpArray->dwElementNum++] = lpElem;
 	return TRUE;

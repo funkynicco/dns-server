@@ -92,7 +92,7 @@ BOOL Initialize(struct ServerParameters* lp)
 			g_Configuration.DnsServer.SecondaryDnsServerPort);
 		DnsServerSetSecondaryDnsServer(lp->lpDnsServerInfo, &SecondaryDnsServer);
 
-		if (!DnsServerStart(lp->lpDnsServerInfo, g_Configuration.DnsServer.Port))
+		if (!DnsServerStart(lp->lpDnsServerInfo))
 		{
 			Error("Failed to start DNS server, socket error: %d - %s", GetLastError(), GetErrorMessage(GetLastError()));
 			return FALSE;
@@ -110,7 +110,7 @@ BOOL Initialize(struct ServerParameters* lp)
 			return FALSE;
 		}
 
-		if (!WebServerStart(lp->lpWebServerInfo, g_Configuration.Web.Port))
+		if (!WebServerStart(lp->lpWebServerInfo))
 		{
 			Error("Failed to start Web server, socket error: %d - %s", GetLastError(), GetErrorMessage(GetLastError()));
 			return FALSE;
@@ -143,6 +143,7 @@ void Uninitalize(struct ServerParameters* lp)
 int main(int argc, char* argv[])
 {
 	SetConsoleTitle(L"DNS Server Test");
+	InitializeErrorDescriptionTable();
 
 	struct ServerParameters serverParameters;
 	ZeroMemory(&serverParameters, sizeof(struct ServerParameters));

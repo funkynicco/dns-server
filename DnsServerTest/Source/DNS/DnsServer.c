@@ -73,7 +73,7 @@ void DnsServerStop(LPDNS_SERVER_INFO lpServerInfo)
 			LPDNS_REQUEST_INFO lpRequestInfo = (LPDNS_REQUEST_INFO)__lpArray->Elem[i]; \
 			ptrAllocData += sprintf(ptrAllocData, "%08x(%s)", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode)); \
 		} \
-		*ptrAllocData = 0; \
+		*ptrAllocData = 0;
 
 		DWORD dwAllocatedRequests;
 		do

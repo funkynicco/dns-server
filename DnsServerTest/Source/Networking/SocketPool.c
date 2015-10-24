@@ -50,7 +50,7 @@ void DestroySocketPool()
 		DeleteCriticalSection(&SocketPool[i].CritSect);
 
 		if (SocketPool[i].dwAllocatedSockets > 0)
-			Error(__FUNCTION__ " - [WARNING] %u sockets are still allocated!", SocketPool[i].dwAllocatedSockets);
+			Error(__FUNCTION__ " - [WARNING] %u %s sockets are still allocated!", SocketPool[i].dwAllocatedSockets, i == SOCKETTYPE_UDP ? "UDP" : "TCP");
 
 #ifdef __LOG_SOCKET_ALLOCATIONS
 		if (SocketPool[i].dwNumberOfSockets)
@@ -92,7 +92,7 @@ SOCKET SocketPoolAllocateSocket(int socketType)
 	++pPool->dwAllocatedSockets;
 
 #ifdef __LOG_SOCKET_ALLOCATIONS
-	LoggerWrite(__FUNCTION__ " - Allocated socket %u", Socket);
+	LoggerWrite(__FUNCTION__ " - Allocated %s socket %u", socketType == SOCKETTYPE_UDP ? "UDP" : "TCP", Socket);
 #endif // __LOG_SOCKET_ALLOCATIONS
 
 	LeaveCriticalSection(&pPool->CritSect);
@@ -106,7 +106,7 @@ void SocketPoolDestroySocket(int socketType, SOCKET Socket)
 
 	EnterCriticalSection(&pPool->CritSect);
 	if (pPool->dwAllocatedSockets == 0)
-		Error(__FUNCTION__ " - dwAllocatedSockets is 0 in attempt to destroy socket: %u", Socket)
+		Error(__FUNCTION__ " - dwAllocatedSockets is 0 in attempt to destroy %s socket: %u", socketType == SOCKETTYPE_UDP ? "UDP" : "TCP", Socket)
 	else
 		--pPool->dwAllocatedSockets;
 	LeaveCriticalSection(&pPool->CritSect);
@@ -115,7 +115,7 @@ void SocketPoolDestroySocket(int socketType, SOCKET Socket)
 	closesocket(Socket);
 
 #ifdef __LOG_SOCKET_ALLOCATIONS
-	LoggerWrite(__FUNCTION__ " - Destroyed socket %u", Socket);
+	LoggerWrite(__FUNCTION__ " - Destroyed %s socket %u", socketType == SOCKETTYPE_UDP ? "UDP" : "TCP", Socket);
 #endif // __LOG_SOCKET_ALLOCATIONS
 }
 

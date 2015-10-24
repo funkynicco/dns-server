@@ -1,19 +1,33 @@
 #pragma once
 
-typedef struct _tagWebClientInfo
+#define MAX_WEB_CLIENT_BUFFER 1024
+
+typedef struct _tagWebClientBuffer
 {
 	WSAOVERLAPPED Overlapped;
 
-	struct _tagWebServerInfo* lpServerInfo;
-	SOCKADDR_IN SocketAddress;
-	int SockAddrLen;
+	struct _tagWebClientInfo* lpClientInfo;
 
-	char Buffer[1024];
+	char Buffer[MAX_WEB_CLIENT_BUFFER];
 	DWORD dwLength;
 	DWORD dwFlags;
 
 	int IOMode;
+
+	struct _tagWebClientBuffer* next;
+
+} WEB_CLIENT_BUFFER, *LPWEB_CLIENT_BUFFER;
+
+typedef struct _tagWebClientInfo
+{
+	struct _tagWebServerInfo* lpServerInfo;
+	SOCKADDR_IN SocketAddress;
+	int SockAddrLen;
+
 	SOCKET Socket;
+	BOOL bFreeze;
+
+	LONG NumberOfBuffers;
 
 	struct _tagWebClientInfo* next;
 
@@ -28,10 +42,22 @@ typedef struct _tagWebServerInfo
 	DWORD dwAllocatedClients;
 	CRITICAL_SECTION csAllocClient;
 
+	LPWEB_CLIENT_BUFFER lpFreeBuffers;
+	DWORD dwAllocatedBuffers;
+	CRITICAL_SECTION csAllocBuffer;
+
 	LPARRAY_CONTAINER lpPendingWSARecv;
 	LPARRAY_CONTAINER lpPendingWSASend;
 	LPARRAY_CONTAINER lpAllocatedClients;
+	LPARRAY_CONTAINER lpAllocatedBuffers;
 	CRITICAL_SECTION csStats;
+
+	LPFN_ACCEPTEX lpfnAcceptEx;
+	LPFN_DISCONNECTEX lpfnDisconnectEx;
+	LPFN_GETACCEPTEXSOCKADDRS lpfnGetAcceptExSockaddrs;
+
+	ACCEPT_CONTEXT AcceptContext;
+	BOOL bOutstandingAccept; // move this into it's own critical section
 
 } WEB_SERVER_INFO, *LPWEB_SERVER_INFO;
 
@@ -43,6 +69,9 @@ LPWEB_SERVER_INFO	AllocateWebServerInfo(DWORD dwNumberOfThreads);
 void				DestroyWebServerInfo(LPWEB_SERVER_INFO lpServerInfo);
 LPWEB_CLIENT_INFO	AllocateWebClientInfo(LPWEB_SERVER_INFO lpServerInfo, SOCKET Socket);
 void				DestroyWebClientInfo(LPWEB_CLIENT_INFO lpClientInfo);
+LPWEB_CLIENT_BUFFER	AllocateWebClientBuffer(LPWEB_CLIENT_INFO lpClientInfo);
+LPWEB_CLIENT_BUFFER	CopyWebClientBuffer(LPWEB_CLIENT_BUFFER lpOriginalBuffer);
+void				DestroyWebClientBuffer(LPWEB_CLIENT_BUFFER lpBuffer);
 
 /***************************************************************************************
  * WebServer.c
@@ -55,3 +84,6 @@ void WebServerStop(LPWEB_SERVER_INFO lpServerInfo);
  * WebServerIO.c
  ***************************************************************************************/
 
+BOOL WebServerPostReceive(LPWEB_CLIENT_BUFFER lpBuffer, int IOMode);
+BOOL WebServerPostSend(LPWEB_CLIENT_BUFFER lpBuffer, int IOMode);
+BOOL WebServerPostAccept(LPWEB_SERVER_INFO lpServerInfo);

@@ -10,8 +10,11 @@
 BOOL			GetIPFromSocketAddress(LPSOCKADDR_IN lpAddr, LPSTR lpOutput, DWORD dwSizeOfOutput);
 void			MakeSocketAddress(LPSOCKADDR_IN lpAddr, const char* address, u_short port);
 void			FlipDnsHeader(LPDNS_HEADER lpDnsHeader);
+void			InitializeErrorDescriptionTable();
 BOOL			GetErrorMessageBuffer(DWORD dwError, LPSTR lpOutput, DWORD dwSizeOfOutput);
 LPCSTR			GetErrorMessage(DWORD dwError);
+LPCSTR			GetErrorName(DWORD dwError);
+BOOL			GetErrorDescription(DWORD dwError, LPSTR lpName, LPSTR lpDescription);
 void			AssembleDomainFromLabels(LPSTR lpOutput, char aLabels[16][64], DWORD dwNumLabels);
 LPCSTR			GetIOMode(int IOMode);
 DWORD			CriticalSectionIncrementValue(LPCRITICAL_SECTION lpCriticalSection, LPDWORD lpdwValue);

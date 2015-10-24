@@ -114,6 +114,9 @@
     <ClCompile Include="Source\Web\WebServerIO.c">
       <Filter>Source\Web</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Utilities\ErrorDescriptionTable.c">
+      <Filter>Source\Utilities</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Todo.txt" />

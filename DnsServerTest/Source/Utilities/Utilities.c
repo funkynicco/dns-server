@@ -2,6 +2,7 @@
 #include "Utilities.h"
 
 char g_internalErrorMessageBuffer[1024];
+char g_internalErrorNameBuffer[256];
 
 BOOL GetIPFromSocketAddress(LPSOCKADDR_IN lpAddr, LPSTR lpOutput, DWORD dwSizeOfOutput)
 {
@@ -74,10 +75,36 @@ BOOL GetErrorMessageBuffer(DWORD dwError, LPSTR lpOutput, DWORD dwSizeOfOutput)
 
 LPCSTR GetErrorMessage(DWORD dwError)
 {
-	if (!GetErrorMessageBuffer(dwError, g_internalErrorMessageBuffer, sizeof(g_internalErrorMessageBuffer)))
+	char* ptr = g_internalErrorMessageBuffer;
+	const char* end = g_internalErrorMessageBuffer + sizeof(g_internalErrorMessageBuffer);
+
+	LPCSTR lpErrorName = GetErrorName(dwError);
+	if (lpErrorName)
+		ptr += sprintf(ptr, "%s - ", lpErrorName);
+	else
+		ptr += sprintf(ptr, "[E_CODE:%u] - ", dwError);
+
+	if (!GetErrorMessageBuffer(dwError, ptr, end - ptr))
 		return "[Unknown error code]";
 
 	return g_internalErrorMessageBuffer;
+}
+
+LPCSTR GetErrorName(DWORD dwError)
+{
+	//g_internalErrorNameBuffer
+	if (!GetErrorDescription(dwError, g_internalErrorNameBuffer, NULL))
+		return NULL;
+
+	/*switch (dwError)
+	{
+	case ERROR_CONNECTION_ABORTED: return "ERROR_CONNECTION_ABORTED";
+	case ERROR_NETNAME_DELETED: return "ERROR_NETNAME_DELETED";
+	case WSAENOTSOCK: return "WSAENOTSOCK";
+	case ERROR_OPERATION_ABORTED: return "ERROR_OPERATION_ABORTED";
+	}*/
+
+	return g_internalErrorNameBuffer;
 }
 
 void AssembleDomainFromLabels(LPSTR lpOutput, char aLabels[16][64], DWORD dwNumLabels)
@@ -102,6 +129,7 @@ LPCSTR GetIOMode(int IOMode)
 	case IO_SEND: return "IO_SEND";
 	case IO_RELAY_RECV: return "IO_RELAY_RECV";
 	case IO_RELAY_SEND: return "IO_RELAY_SEND";
+	case IO_ACCEPT: return "IO_ACCEPT";
 	}
 
 	return "E_UNKNOWN_IO_MODE";
