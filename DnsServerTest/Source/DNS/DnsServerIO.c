@@ -19,7 +19,7 @@ BOOL DnsServerPostReceive(LPDNS_REQUEST_INFO lpRequestInfo, int IOMode)
 	lpRequestInfo->IOMode = IOMode;
 
 	EnterCriticalSection(&lpServerInfo->csStats);
-	ASSERT(ArrayContainerAddElement(lpServerInfo->lpPendingWSARecvFrom, lpRequestInfo));
+	ASSERT(ArrayContainerAddElement(&lpServerInfo->PendingWSARecvFrom, lpRequestInfo, NULL));
 	LeaveCriticalSection(&lpServerInfo->csStats);
 
 	int err = WSARecvFrom(
@@ -63,7 +63,7 @@ BOOL DnsServerPostReceive(LPDNS_REQUEST_INFO lpRequestInfo, int IOMode)
 	}
 
 	EnterCriticalSection(&lpServerInfo->csStats);
-	if (!ArrayContainerDeleteElementByValue(lpServerInfo->lpPendingWSARecvFrom, lpRequestInfo))
+	if (!ArrayContainerDeleteElementByValue(&lpServerInfo->PendingWSARecvFrom, lpRequestInfo))
 		Error(__FUNCTION__ " - %08x - %s not found in lpPendingWSARecvFrom", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
 	LeaveCriticalSection(&lpServerInfo->csStats);
 
@@ -93,7 +93,7 @@ BOOL DnsServerPostSend(LPDNS_REQUEST_INFO lpRequestInfo, int IOMode)
 	lpRequestInfo->IOMode = IOMode;
 
 	EnterCriticalSection(&lpServerInfo->csStats);
-	ASSERT(ArrayContainerAddElement(lpServerInfo->lpPendingWSASendTo, lpRequestInfo));
+	ASSERT(ArrayContainerAddElement(&lpServerInfo->PendingWSASendTo, lpRequestInfo, NULL));
 	LeaveCriticalSection(&lpServerInfo->csStats);
 
 	int err = WSASendTo(
@@ -137,7 +137,7 @@ BOOL DnsServerPostSend(LPDNS_REQUEST_INFO lpRequestInfo, int IOMode)
 	}
 
 	EnterCriticalSection(&lpServerInfo->csStats);
-	if (!ArrayContainerDeleteElementByValue(lpServerInfo->lpPendingWSASendTo, lpRequestInfo))
+	if (!ArrayContainerDeleteElementByValue(&lpServerInfo->PendingWSASendTo, lpRequestInfo))
 		Error(__FUNCTION__ " - %08x - %s not found in lpPendingWSASendTo", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
 	LeaveCriticalSection(&lpServerInfo->csStats);
 
@@ -194,14 +194,14 @@ DWORD WINAPI DnsServerIOHandler(LPVOID lp)
 					case IO_RECV:
 					case IO_RELAY_RECV:
 						EnterCriticalSection(&lpServerInfo->csStats);
-						if (!ArrayContainerDeleteElementByValue(lpServerInfo->lpPendingWSARecvFrom, lpRequestInfo))
+						if (!ArrayContainerDeleteElementByValue(&lpServerInfo->PendingWSARecvFrom, lpRequestInfo))
 							Error(__FUNCTION__ " - %08x - %s not found in lpPendingWSARecvFrom", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
 						LeaveCriticalSection(&lpServerInfo->csStats);
 						break;
 					case IO_SEND:
 					case IO_RELAY_SEND:
 						EnterCriticalSection(&lpServerInfo->csStats);
-						if (!ArrayContainerDeleteElementByValue(lpServerInfo->lpPendingWSASendTo, lpRequestInfo))
+						if (!ArrayContainerDeleteElementByValue(&lpServerInfo->PendingWSASendTo, lpRequestInfo))
 							Error(__FUNCTION__ " - %08x - %s not found in lpPendingWSASendTo", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
 						LeaveCriticalSection(&lpServerInfo->csStats);
 						break;
@@ -253,7 +253,7 @@ DWORD WINAPI DnsServerIOHandler(LPVOID lp)
 		{
 		case IO_RECV:
 			EnterCriticalSection(&lpServerInfo->csStats);
-			if (!ArrayContainerDeleteElementByValue(lpServerInfo->lpPendingWSARecvFrom, lpRequestInfo))
+			if (!ArrayContainerDeleteElementByValue(&lpServerInfo->PendingWSARecvFrom, lpRequestInfo))
 				Error(__FUNCTION__ " - %08x - %s not found in lpPendingWSARecvFrom", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
 			LeaveCriticalSection(&lpServerInfo->csStats);
 
@@ -264,7 +264,7 @@ DWORD WINAPI DnsServerIOHandler(LPVOID lp)
 			break;
 		case IO_RELAY_RECV: // route packet to the initial client
 			EnterCriticalSection(&lpServerInfo->csStats);
-			if (!ArrayContainerDeleteElementByValue(lpServerInfo->lpPendingWSARecvFrom, lpRequestInfo))
+			if (!ArrayContainerDeleteElementByValue(&lpServerInfo->PendingWSARecvFrom, lpRequestInfo))
 				Error(__FUNCTION__ " - %08x - %s not found in lpPendingWSARecvFrom", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
 			LeaveCriticalSection(&lpServerInfo->csStats);
 
@@ -295,7 +295,7 @@ DWORD WINAPI DnsServerIOHandler(LPVOID lp)
 		case IO_SEND:
 		case IO_RELAY_SEND:
 			EnterCriticalSection(&lpServerInfo->csStats);
-			if (!ArrayContainerDeleteElementByValue(lpServerInfo->lpPendingWSASendTo, lpRequestInfo))
+			if (!ArrayContainerDeleteElementByValue(&lpServerInfo->PendingWSASendTo, lpRequestInfo))
 				Error(__FUNCTION__ " - %08x - %s not found in lpPendingWSASendTo", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
 			LeaveCriticalSection(&lpServerInfo->csStats);
 			// this was a completed send request

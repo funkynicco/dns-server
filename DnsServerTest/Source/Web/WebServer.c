@@ -129,9 +129,9 @@ void WebServerStop(LPWEB_SERVER_INFO lpServerInfo)
 
 		// loop through each client and destroy
 		EnterCriticalSection(&lpServerInfo->csAllocClient);
-		for (DWORD i = 0; i < lpServerInfo->lpAllocatedClients->dwElementNum; ++i)
+		for (DWORD i = 0; i < lpServerInfo->AllocatedClients.dwElementNum; ++i)
 		{
-			LPWEB_CLIENT_INFO lpClientInfo = (LPWEB_CLIENT_INFO)lpServerInfo->lpAllocatedClients->Elem[i];
+			LPWEB_CLIENT_INFO lpClientInfo = (LPWEB_CLIENT_INFO)lpServerInfo->AllocatedClients.pElem[i];
 
 			if (!CancelIoEx((HANDLE)lpClientInfo->Socket, NULL))
 			{
@@ -150,13 +150,13 @@ void WebServerStop(LPWEB_SERVER_INFO lpServerInfo)
 
 #define MAKE_ALLOC_DATA(__lpArray) \
 		ptrAllocData = allocData; \
-		ptrAllocData += sprintf(ptrAllocData, "[" #__lpArray ": %u] ", __lpArray->dwElementNum); \
-		for (DWORD i = 0; i < __lpArray->dwElementNum; ++i) \
+		ptrAllocData += sprintf(ptrAllocData, "[" #__lpArray ": %u] ", (__lpArray)->dwElementNum); \
+		for (DWORD i = 0; i < (__lpArray)->dwElementNum; ++i) \
 		{ \
 			if (i > 0) \
 				ptrAllocData += sprintf(ptrAllocData, ", "); \
 \
-			ptrAllocData += sprintf(ptrAllocData, "%08x", (ULONG_PTR)__lpArray->Elem[i]); \
+			ptrAllocData += sprintf(ptrAllocData, "%08x", (ULONG_PTR)(__lpArray)->pElem[i]); \
 		} \
 		*ptrAllocData = 0;
 
@@ -180,13 +180,13 @@ void WebServerStop(LPWEB_SERVER_INFO lpServerInfo)
 					dwAllocatedBuffers);
 
 				EnterCriticalSection(&lpServerInfo->csStats);
-				MAKE_ALLOC_DATA(lpServerInfo->lpAllocatedClients);
+				MAKE_ALLOC_DATA(&lpServerInfo->AllocatedClients);
 				Error("%s", allocData);
-				MAKE_ALLOC_DATA(lpServerInfo->lpAllocatedBuffers);
+				MAKE_ALLOC_DATA(&lpServerInfo->AllocatedBuffers);
 				Error("%s", allocData);
-				MAKE_ALLOC_DATA(lpServerInfo->lpPendingWSARecv);
+				MAKE_ALLOC_DATA(&lpServerInfo->PendingWSARecv);
 				Error("%s", allocData);
-				MAKE_ALLOC_DATA(lpServerInfo->lpPendingWSASend);
+				MAKE_ALLOC_DATA(&lpServerInfo->PendingWSASend);
 				Error("%s", allocData);
 				LeaveCriticalSection(&lpServerInfo->csStats);
 

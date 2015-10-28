@@ -46,10 +46,10 @@ typedef struct _tagWebServerInfo
 	DWORD dwAllocatedBuffers;
 	CRITICAL_SECTION csAllocBuffer;
 
-	LPARRAY_CONTAINER lpPendingWSARecv;
-	LPARRAY_CONTAINER lpPendingWSASend;
-	LPARRAY_CONTAINER lpAllocatedClients;
-	LPARRAY_CONTAINER lpAllocatedBuffers;
+	ARRAY_CONTAINER PendingWSARecv;
+	ARRAY_CONTAINER PendingWSASend;
+	ARRAY_CONTAINER AllocatedClients;
+	ARRAY_CONTAINER AllocatedBuffers;
 	CRITICAL_SECTION csStats;
 
 	LPFN_ACCEPTEX lpfnAcceptEx;

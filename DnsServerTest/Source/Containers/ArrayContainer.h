@@ -3,7 +3,7 @@
 #define SafeArrayContainerAddElement(_CriticalSection, _Array, _Value) \
 { \
 	EnterCriticalSection(_CriticalSection); \
-	ASSERT(ArrayContainerAddElement(_Array, _Value)); \
+	ASSERT(ArrayContainerAddElement(_Array, _Value, NULL)); \
 	LeaveCriticalSection(_CriticalSection); \
 }
 
@@ -21,47 +21,42 @@ typedef struct _tagArrayContainer
 	DWORD dwSize;
 	DWORD dwCapacity;
 	DWORD dwElementNum;
-	void* Elem[1];
+	void** pElem;
 
 } ARRAY_CONTAINER, *LPARRAY_CONTAINER;
 
-static LPARRAY_CONTAINER ArrayContainerCreate(DWORD dwInitialCapacity)
+static BOOL ArrayContainerCreate(LPARRAY_CONTAINER lpArray, DWORD dwInitialCapacity)
 {
-	DWORD dwSize = sizeof(DWORD) * 3 + (sizeof(void*) * dwInitialCapacity);
-	LPARRAY_CONTAINER lpArray = (LPARRAY_CONTAINER)malloc(dwSize);
+	DWORD dwSize = sizeof(void*) * dwInitialCapacity;
+	void** data = (void**)malloc(dwSize);
+	if (!data)
+		return FALSE;
 
 	lpArray->bSelfAllocated = TRUE;
 	lpArray->dwSize = dwSize;
 	lpArray->dwCapacity = dwInitialCapacity;
 	lpArray->dwElementNum = 0;
+	lpArray->pElem = data;
 
-	return lpArray;
+	return TRUE;
 }
 
-static LPARRAY_CONTAINER ArrayContainerCreateFromMemory(LPVOID lpMemory, DWORD dwSizeOfMemory)
+static void ArrayContainerCreateFromMemory(LPARRAY_CONTAINER lpArray, LPVOID lpMemory, DWORD dwSizeOfMemory)
 {
-	if (dwSizeOfMemory < sizeof(ARRAY_CONTAINER))
-		return NULL;
-
-	LPARRAY_CONTAINER lpArray = (LPARRAY_CONTAINER)lpMemory;
-
-	DWORD dwHeaderSize = sizeof(ARRAY_CONTAINER) - 4;
-
 	lpArray->bSelfAllocated = FALSE;
 	lpArray->dwSize = dwSizeOfMemory;
-	lpArray->dwCapacity = (dwSizeOfMemory - dwHeaderSize) / 4;
+	lpArray->dwCapacity = dwSizeOfMemory / sizeof(void*);
 	lpArray->dwElementNum = 0;
-
-	return lpArray;
+	lpArray->pElem = (void**)lpMemory;
 }
 
 static void ArrayContainerDestroy(LPARRAY_CONTAINER lpArray)
 {
 	if (lpArray->bSelfAllocated)
-		free(lpArray);
+		free(lpArray->pElem);
 }
 
-static BOOL ArrayContainerAddElement(LPARRAY_CONTAINER lpArray, LPVOID lpElem)
+static BOOL ArrayContainerAddElement(LPARRAY_CONTAINER lpArray, LPVOID lpElem, LPDWORD lpdwIndex)
 {
 	if (lpArray->dwElementNum == lpArray->dwCapacity)
 	{
@@ -73,27 +68,29 @@ static BOOL ArrayContainerAddElement(LPARRAY_CONTAINER lpArray, LPVOID lpElem)
 		if (dwNewCapacity - lpArray->dwCapacity > 4096)
 			dwNewCapacity = lpArray->dwCapacity + 4096;
 
-		DWORD dwNewSize = sizeof(DWORD) * 3 + (sizeof(void*) * dwNewCapacity);
-		LPARRAY_CONTAINER lpNewArray = (LPARRAY_CONTAINER)malloc(dwNewSize); //(LPARRAY_CONTAINER)realloc(lpArray, dwNewSize);
-		if (!lpNewArray)
+		DWORD dwNewSize = sizeof(void*) * dwNewCapacity;
+		void** lpNewElem = (void**)realloc(lpArray->pElem, dwNewSize);
+		if (!lpNewElem)
 			return FALSE;
 
-		CopyMemory(lpNewArray, lpArray, lpArray->dwSize);
-		lpNewArray->dwSize = dwNewSize;
-		lpNewArray->dwCapacity = dwNewCapacity;
+		lpArray->dwSize = dwNewSize;
+		lpArray->dwCapacity = dwNewCapacity;
 
 #ifdef _DEBUG
 		LoggerWrite(__FUNCTION__ " - Reallocated %08x => %08x, added %u new elements",
-			(ULONG_PTR)lpArray,
-			(ULONG_PTR)lpNewArray,
+			(ULONG_PTR)lpArray->pElem,
+			(ULONG_PTR)lpNewElem,
 			dwNewCapacity - lpArray->dwCapacity);
 #endif // _DEBUG
 
-		free(lpArray);
-		lpArray = lpNewArray;
+		lpArray->pElem = lpNewElem;
 	}
 
-	lpArray->Elem[lpArray->dwElementNum++] = lpElem;
+	DWORD dwIndex = lpArray->dwElementNum++;
+
+	lpArray->pElem[dwIndex] = lpElem;
+	if (lpdwIndex)
+		*lpdwIndex = dwIndex;
 	return TRUE;
 }
 
@@ -105,8 +102,8 @@ static void ArrayContainerDeleteElements(LPARRAY_CONTAINER lpArray, DWORD dwInde
 	const DWORD dwSizeOfElem = sizeof(void*);
 
 	memcpy(
-		(unsigned char*)lpArray->Elem + dwIndex * dwSizeOfElem,
-		(unsigned char*)lpArray->Elem + dwIndex * dwSizeOfElem + dwNumberOfElements * dwSizeOfElem,
+		(unsigned char*)lpArray->pElem + dwIndex * dwSizeOfElem,
+		(unsigned char*)lpArray->pElem + dwIndex * dwSizeOfElem + dwNumberOfElements * dwSizeOfElem,
 		(lpArray->dwElementNum - (dwIndex + dwNumberOfElements)) * dwSizeOfElem);
 
 	lpArray->dwElementNum -= dwNumberOfElements;
@@ -123,7 +120,7 @@ static BOOL ArrayContainerDeleteElementByValue(LPARRAY_CONTAINER lpArray, LPVOID
 
 	for (DWORD i = 0; i < lpArray->dwElementNum;)
 	{
-		if (lpArray->Elem[i] == lpElem)
+		if (lpArray->pElem[i] == lpElem)
 		{
 			if (bFound)
 				Error(__FUNCTION__ " - Multiple entries of same value %08x", (ULONG_PTR)lpElem);
@@ -148,31 +145,32 @@ static void TestArrayContainer()
 {
 	char buffer[1024];
 	memset(buffer, 0xcd, sizeof(buffer));
-	LPARRAY_CONTAINER lpArray = ArrayContainerCreateFromMemory(buffer, sizeof(buffer));
+	ARRAY_CONTAINER Array;
+	ArrayContainerCreateFromMemory(&Array, buffer, sizeof(buffer));
 
 	////////////////////////////////////////////////////////////////////
 #define PRINT_ARRAY() \
-	printf("N(%u): ", lpArray->dwElementNum); \
-	for (DWORD i = 0; i < lpArray->dwElementNum; ++i) \
+	printf("N(%u): ", Array.dwElementNum); \
+	for (DWORD i = 0; i < Array.dwElementNum; ++i) \
 	{ \
 		if (i > 0) \
 			printf(", "); \
  \
-		printf("%u", (ULONG_PTR)lpArray->Elem[i]); \
+		printf("%u", (ULONG_PTR)Array.pElem[i]); \
 	} \
 	printf("\n");
 	////////////////////////////////////////////////////////////////////
 
-	ArrayContainerAddElement(lpArray, (LPVOID)1337);
+	ArrayContainerAddElement(&Array, (LPVOID)1337, NULL);
 	PRINT_ARRAY();
-	ArrayContainerAddElement(lpArray, (LPVOID)2661);
+	ArrayContainerAddElement(&Array, (LPVOID)2661, NULL);
 	PRINT_ARRAY();
-	ArrayContainerAddElement(lpArray, (LPVOID)6161);
+	ArrayContainerAddElement(&Array, (LPVOID)6161, NULL);
 	PRINT_ARRAY();
-	ArrayContainerDeleteElementByValue(lpArray, (LPVOID)1337);
+	ArrayContainerDeleteElementByValue(&Array, (LPVOID)1337);
 	PRINT_ARRAY();
-	ArrayContainerAddElement(lpArray, (LPVOID)616);
+	ArrayContainerAddElement(&Array, (LPVOID)616, NULL);
 	PRINT_ARRAY();
-	ArrayContainerDeleteElementByValue(lpArray, (LPVOID)2661);
+	ArrayContainerDeleteElementByValue(&Array, (LPVOID)2661);
 	PRINT_ARRAY();
 }

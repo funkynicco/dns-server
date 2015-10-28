@@ -22,30 +22,30 @@ LPWEB_SERVER_INFO AllocateWebServerInfo(DWORD dwNumberOfThreads)
 	ASSERT(InitializeCriticalSectionAndSpinCount(&lpServerInfo->csAllocClient, 2000));
 	ASSERT(InitializeCriticalSectionAndSpinCount(&lpServerInfo->csStats, 2000));
 
-	lpServerInfo->lpPendingWSARecv = ArrayContainerCreate(32);
+	ArrayContainerCreate(&lpServerInfo->PendingWSARecv, 32);
 	LoggerWrite(__FUNCTION__ " - 1: %08x, 2: %08x, 3: %08x, 4: %08x",
-		(ULONG_PTR)lpServerInfo->lpPendingWSARecv,
-		(ULONG_PTR)lpServerInfo->lpPendingWSASend,
-		(ULONG_PTR)lpServerInfo->lpAllocatedClients,
-		(ULONG_PTR)lpServerInfo->lpAllocatedBuffers);
-	lpServerInfo->lpPendingWSASend = ArrayContainerCreate(32);
+		(ULONG_PTR)lpServerInfo->PendingWSARecv.pElem,
+		(ULONG_PTR)lpServerInfo->PendingWSASend.pElem,
+		(ULONG_PTR)lpServerInfo->AllocatedClients.pElem,
+		(ULONG_PTR)lpServerInfo->AllocatedBuffers.pElem);
+	ArrayContainerCreate(&lpServerInfo->PendingWSASend, 32);
 	LoggerWrite(__FUNCTION__ " - 1: %08x, 2: %08x, 3: %08x, 4: %08x",
-		(ULONG_PTR)lpServerInfo->lpPendingWSARecv,
-		(ULONG_PTR)lpServerInfo->lpPendingWSASend,
-		(ULONG_PTR)lpServerInfo->lpAllocatedClients,
-		(ULONG_PTR)lpServerInfo->lpAllocatedBuffers);
-	lpServerInfo->lpAllocatedClients = ArrayContainerCreate(16);
+		(ULONG_PTR)lpServerInfo->PendingWSARecv.pElem,
+		(ULONG_PTR)lpServerInfo->PendingWSASend.pElem,
+		(ULONG_PTR)lpServerInfo->AllocatedClients.pElem,
+		(ULONG_PTR)lpServerInfo->AllocatedBuffers.pElem);
+	ArrayContainerCreate(&lpServerInfo->AllocatedClients, 16);
 	LoggerWrite(__FUNCTION__ " - 1: %08x, 2: %08x, 3: %08x, 4: %08x",
-		(ULONG_PTR)lpServerInfo->lpPendingWSARecv,
-		(ULONG_PTR)lpServerInfo->lpPendingWSASend,
-		(ULONG_PTR)lpServerInfo->lpAllocatedClients,
-		(ULONG_PTR)lpServerInfo->lpAllocatedBuffers);
-	lpServerInfo->lpAllocatedBuffers = ArrayContainerCreate(64);
+		(ULONG_PTR)lpServerInfo->PendingWSARecv.pElem,
+		(ULONG_PTR)lpServerInfo->PendingWSASend.pElem,
+		(ULONG_PTR)lpServerInfo->AllocatedClients.pElem,
+		(ULONG_PTR)lpServerInfo->AllocatedBuffers.pElem);
+	ArrayContainerCreate(&lpServerInfo->AllocatedBuffers, 64);
 	LoggerWrite(__FUNCTION__ " - 1: %08x, 2: %08x, 3: %08x, 4: %08x",
-		(ULONG_PTR)lpServerInfo->lpPendingWSARecv,
-		(ULONG_PTR)lpServerInfo->lpPendingWSASend,
-		(ULONG_PTR)lpServerInfo->lpAllocatedClients,
-		(ULONG_PTR)lpServerInfo->lpAllocatedBuffers);
+		(ULONG_PTR)lpServerInfo->PendingWSARecv.pElem,
+		(ULONG_PTR)lpServerInfo->PendingWSASend.pElem,
+		(ULONG_PTR)lpServerInfo->AllocatedClients.pElem,
+		(ULONG_PTR)lpServerInfo->AllocatedBuffers.pElem);
 
 	for (DWORD i = 0; i < dwNumberOfThreads; ++i)
 	{
@@ -104,10 +104,10 @@ void DestroyWebServerInfo(LPWEB_SERVER_INFO lpServerInfo)
 		free(GetRealMemoryPointer(lpBuffer));
 	}
 
-	ArrayContainerDestroy(lpServerInfo->lpPendingWSARecv);
-	ArrayContainerDestroy(lpServerInfo->lpPendingWSASend);
-	ArrayContainerDestroy(lpServerInfo->lpAllocatedClients);
-	ArrayContainerDestroy(lpServerInfo->lpAllocatedBuffers);
+	ArrayContainerDestroy(&lpServerInfo->PendingWSARecv);
+	ArrayContainerDestroy(&lpServerInfo->PendingWSASend);
+	ArrayContainerDestroy(&lpServerInfo->AllocatedClients);
+	ArrayContainerDestroy(&lpServerInfo->AllocatedBuffers);
 
 	DeleteCriticalSection(&lpServerInfo->csStats);
 	DeleteCriticalSection(&lpServerInfo->csAllocClient);
@@ -139,7 +139,7 @@ static LPWEB_CLIENT_INFO InternalAllocateWebClientInfo(LPWEB_SERVER_INFO lpServe
 		lpClientInfo = (LPWEB_CLIENT_INFO)((char*)malloc(sizeof(WEB_CLIENT_INFO) + 1) + 1);
 
 	EnterCriticalSection(&lpServerInfo->csStats);
-	if (!ArrayContainerAddElement(lpServerInfo->lpAllocatedClients, lpClientInfo))
+	if (!ArrayContainerAddElement(&lpServerInfo->AllocatedClients, lpClientInfo, NULL))
 		Error(__FUNCTION__ " - Failed to add lpClientInfo %08x to lpAllocatedClients", (ULONG_PTR)lpClientInfo);
 	LeaveCriticalSection(&lpServerInfo->csStats);
 
@@ -216,7 +216,7 @@ void DestroyWebClientInfo(LPWEB_CLIENT_INFO lpClientInfo)
 	}
 
 	EnterCriticalSection(&lpServerInfo->csStats);
-	if (!ArrayContainerDeleteElementByValue(lpServerInfo->lpAllocatedClients, lpClientInfo))
+	if (!ArrayContainerDeleteElementByValue(&lpServerInfo->AllocatedClients, lpClientInfo))
 		Error(__FUNCTION__ " - Failed to remove lpClientInfo %08x from lpAllocatedClients", (ULONG_PTR)lpClientInfo);
 	LeaveCriticalSection(&lpServerInfo->csStats);
 
@@ -243,7 +243,7 @@ static LPWEB_CLIENT_BUFFER InternalAllocateWebClientBuffer(LPWEB_CLIENT_INFO lpC
 		lpBuffer = (LPWEB_CLIENT_BUFFER)((char*)malloc(sizeof(WEB_CLIENT_BUFFER) + 1) + 1);
 
 	EnterCriticalSection(&lpServerInfo->csStats);
-	if (!ArrayContainerAddElement(lpServerInfo->lpAllocatedBuffers, lpBuffer))
+	if (!ArrayContainerAddElement(&lpServerInfo->AllocatedBuffers, lpBuffer, NULL))
 		Error(__FUNCTION__ " - Failed to add lpBuffer %08x to lpAllocatedBuffers", (ULONG_PTR)lpBuffer);
 	LeaveCriticalSection(&lpServerInfo->csStats);
 
@@ -317,7 +317,7 @@ void DestroyWebClientBuffer(LPWEB_CLIENT_BUFFER lpBuffer)
 	}
 
 	EnterCriticalSection(&lpServerInfo->csStats);
-	if (!ArrayContainerDeleteElementByValue(lpServerInfo->lpAllocatedBuffers, lpBuffer))
+	if (!ArrayContainerDeleteElementByValue(&lpServerInfo->AllocatedBuffers, lpBuffer))
 		Error(__FUNCTION__ " - Failed to remove lpBuffer %08x from lpAllocatedBuffers", (ULONG_PTR)lpBuffer);
 	LeaveCriticalSection(&lpServerInfo->csStats);
 

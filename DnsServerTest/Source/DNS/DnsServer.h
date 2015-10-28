@@ -60,9 +60,9 @@ typedef struct _tagDnsServerInfo
 
 	//DWORD dwPendingWSARecvFrom;
 	//DWORD dwPendingWSASendTo;
-	LPARRAY_CONTAINER lpPendingWSARecvFrom;
-	LPARRAY_CONTAINER lpPendingWSASendTo;
-	LPARRAY_CONTAINER lpAllocatedRequests;
+	ARRAY_CONTAINER PendingWSARecvFrom;
+	ARRAY_CONTAINER PendingWSASendTo;
+	ARRAY_CONTAINER AllocatedRequests;
 	CRITICAL_SECTION csStats;
 
 	LPDNS_REQUEST_TIMEOUT_HANDLER lpRequestTimeoutHandler;

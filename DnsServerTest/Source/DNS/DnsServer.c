@@ -64,13 +64,13 @@ void DnsServerStop(LPDNS_SERVER_INFO lpServerInfo)
 
 #define MAKE_ALLOC_DATA(__lpArray) \
 		ptrAllocData = allocData; \
-		ptrAllocData += sprintf(ptrAllocData, "[" #__lpArray ": %u] ", __lpArray->dwElementNum); \
-		for (DWORD i = 0; i < __lpArray->dwElementNum; ++i) \
+		ptrAllocData += sprintf(ptrAllocData, "[" #__lpArray ": %u] ", (__lpArray)->dwElementNum); \
+		for (DWORD i = 0; i < (__lpArray)->dwElementNum; ++i) \
 		{ \
 			if (i > 0) \
 				ptrAllocData += sprintf(ptrAllocData, ", "); \
 \
-			LPDNS_REQUEST_INFO lpRequestInfo = (LPDNS_REQUEST_INFO)__lpArray->Elem[i]; \
+			LPDNS_REQUEST_INFO lpRequestInfo = (LPDNS_REQUEST_INFO)(__lpArray)->pElem[i]; \
 			ptrAllocData += sprintf(ptrAllocData, "%08x(%s)", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode)); \
 		} \
 		*ptrAllocData = 0;
@@ -87,11 +87,11 @@ void DnsServerStop(LPDNS_SERVER_INFO lpServerInfo)
 				Error(__FUNCTION__ " - [Warning] (Pending I/O operations) dwAllocatedRequests: %u", dwAllocatedRequests);
 
 				EnterCriticalSection(&lpServerInfo->csStats);
-				MAKE_ALLOC_DATA(lpServerInfo->lpAllocatedRequests);
+				MAKE_ALLOC_DATA(&lpServerInfo->AllocatedRequests);
 				Error("%s", allocData);
-				MAKE_ALLOC_DATA(lpServerInfo->lpPendingWSARecvFrom);
+				MAKE_ALLOC_DATA(&lpServerInfo->PendingWSARecvFrom);
 				Error("%s", allocData);
-				MAKE_ALLOC_DATA(lpServerInfo->lpPendingWSASendTo);
+				MAKE_ALLOC_DATA(&lpServerInfo->PendingWSASendTo);
 				Error("%s", allocData);
 				LeaveCriticalSection(&lpServerInfo->csStats);
 

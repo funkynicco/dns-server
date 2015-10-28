@@ -25,9 +25,9 @@ LPDNS_SERVER_INFO AllocateDnsServerInfo()
 	ASSERT(InitializeCriticalSectionAndSpinCount(&lpServerInfo->csAllocRequest, 2000));
 	ASSERT(InitializeCriticalSectionAndSpinCount(&lpServerInfo->csStats, 2000));
 
-	lpServerInfo->lpPendingWSARecvFrom = ArrayContainerCreate(32);
-	lpServerInfo->lpPendingWSASendTo = ArrayContainerCreate(32);
-	lpServerInfo->lpAllocatedRequests = ArrayContainerCreate(64);
+	ArrayContainerCreate(&lpServerInfo->PendingWSARecvFrom, 32);
+	ArrayContainerCreate(&lpServerInfo->PendingWSASendTo, 32);
+	ArrayContainerCreate(&lpServerInfo->AllocatedRequests, 64);
 
 	if (!DnsRequestHandlerInitialize(lpServerInfo, 8))
 	{
@@ -91,10 +91,10 @@ void DestroyDnsServerInfo(LPDNS_SERVER_INFO lpServerInfo)
 		free(GetRealMemoryPointer(lpRequestInfo));
 	}
 
-	ArrayContainerDestroy(lpServerInfo->lpPendingWSARecvFrom);
-	ArrayContainerDestroy(lpServerInfo->lpPendingWSASendTo);
-	ArrayContainerDestroy(lpServerInfo->lpAllocatedRequests);
-	
+	ArrayContainerDestroy(&lpServerInfo->PendingWSARecvFrom);
+	ArrayContainerDestroy(&lpServerInfo->PendingWSASendTo);
+	ArrayContainerDestroy(&lpServerInfo->AllocatedRequests);
+
 	DnsRequestTimeoutDestroy(lpServerInfo->lpRequestTimeoutHandler);
 
 	DeleteCriticalSection(&lpServerInfo->csStats);
@@ -128,7 +128,7 @@ static LPDNS_REQUEST_INFO InternalAllocateDnsRequestInfo(LPDNS_SERVER_INFO lpSer
 		lpRequestInfo = (LPDNS_REQUEST_INFO)((char*)malloc(sizeof(DNS_REQUEST_INFO) + 1) + 1);
 
 	EnterCriticalSection(&lpServerInfo->csStats);
-	if (!ArrayContainerAddElement(lpServerInfo->lpAllocatedRequests, lpRequestInfo))
+	if (!ArrayContainerAddElement(&lpServerInfo->AllocatedRequests, lpRequestInfo, NULL))
 		Error(__FUNCTION__ " - Failed to add lpRequestInfo %08x to lpAllocatedRequests", (ULONG_PTR)lpRequestInfo);
 	LeaveCriticalSection(&lpServerInfo->csStats);
 
@@ -205,7 +205,7 @@ void DestroyDnsRequestInfo(LPDNS_REQUEST_INFO lpRequestInfo)
 	}
 
 	EnterCriticalSection(&lpServerInfo->csStats);
-	if (!ArrayContainerDeleteElementByValue(lpServerInfo->lpAllocatedRequests, lpRequestInfo))
+	if (!ArrayContainerDeleteElementByValue(&lpServerInfo->AllocatedRequests, lpRequestInfo))
 		Error(__FUNCTION__ " - Failed to remove lpRequestInfo %08x from lpAllocatedRequests", (ULONG_PTR)lpRequestInfo);
 	LeaveCriticalSection(&lpServerInfo->csStats);
 

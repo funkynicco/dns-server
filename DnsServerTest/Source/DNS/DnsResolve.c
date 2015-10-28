@@ -167,13 +167,13 @@ DWORD WINAPI DnsResolveHandler(LPVOID lp)
 						DnsRequestTimeoutRemoveRequest(DRP->lpServerInfo->lpRequestTimeoutHandler, lpRequestInfo);
 
 						EnterCriticalSection(&DRP->lpServerInfo->csStats);
-						if (!ArrayContainerDeleteElementByValue(DRP->lpServerInfo->lpPendingWSARecvFrom, lpRequestInfo))
+						if (!ArrayContainerDeleteElementByValue(&DRP->lpServerInfo->PendingWSARecvFrom, lpRequestInfo))
 							Error(__FUNCTION__ " - %08x - %s not found in lpPendingWSARecvFrom", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
 						LeaveCriticalSection(&DRP->lpServerInfo->csStats);
 						break;
 					case IO_RELAY_SEND:
 						EnterCriticalSection(&DRP->lpServerInfo->csStats);
-						if (!ArrayContainerDeleteElementByValue(DRP->lpServerInfo->lpPendingWSASendTo, lpRequestInfo))
+						if (!ArrayContainerDeleteElementByValue(&DRP->lpServerInfo->PendingWSASendTo, lpRequestInfo))
 							Error(__FUNCTION__ " - %08x - %s not found in lpPendingWSASendTo", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
 						LeaveCriticalSection(&DRP->lpServerInfo->csStats);
 						break;
@@ -228,7 +228,7 @@ DWORD WINAPI DnsResolveHandler(LPVOID lp)
 			DnsRequestTimeoutRemoveRequest(DRP->lpServerInfo->lpRequestTimeoutHandler, lpRequestInfo);
 
 			EnterCriticalSection(&DRP->lpServerInfo->csStats);
-			if (!ArrayContainerDeleteElementByValue(DRP->lpServerInfo->lpPendingWSARecvFrom, lpRequestInfo))
+			if (!ArrayContainerDeleteElementByValue(&DRP->lpServerInfo->PendingWSARecvFrom, lpRequestInfo))
 				Error(__FUNCTION__ " - %08x - %s not found in lpPendingWSARecvFrom", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
 			LeaveCriticalSection(&DRP->lpServerInfo->csStats);
 
@@ -261,7 +261,7 @@ DWORD WINAPI DnsResolveHandler(LPVOID lp)
 			break;
 		case IO_RELAY_SEND:
 			EnterCriticalSection(&DRP->lpServerInfo->csStats);
-			if (!ArrayContainerDeleteElementByValue(DRP->lpServerInfo->lpPendingWSASendTo, lpRequestInfo))
+			if (!ArrayContainerDeleteElementByValue(&DRP->lpServerInfo->PendingWSASendTo, lpRequestInfo))
 				Error(__FUNCTION__ " - %08x - %s not found in lpPendingWSASendTo", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
 			LeaveCriticalSection(&DRP->lpServerInfo->csStats);
 #ifdef __LOG_DNS_ALLOCATIONS

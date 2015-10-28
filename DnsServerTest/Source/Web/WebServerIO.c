@@ -40,7 +40,7 @@ BOOL WebServerPostReceive(LPWEB_CLIENT_BUFFER lpBuffer, int IOMode)
 	lpBuffer->dwFlags = 0;
 	lpBuffer->IOMode = IOMode;
 
-	SafeArrayContainerAddElement(&lpServerInfo->csStats, lpServerInfo->lpPendingWSARecv, lpBuffer);
+	SafeArrayContainerAddElement(&lpServerInfo->csStats, &lpServerInfo->PendingWSARecv, lpBuffer);
 
 	int err = WSARecv(
 		lpClientInfo->Socket,
@@ -80,7 +80,7 @@ BOOL WebServerPostReceive(LPWEB_CLIENT_BUFFER lpBuffer, int IOMode)
 		return TRUE;
 	}
 
-	SafeArrayContainerDeleteElementByValue(&lpServerInfo->csStats, lpServerInfo->lpPendingWSARecv, lpBuffer);
+	SafeArrayContainerDeleteElementByValue(&lpServerInfo->csStats, &lpServerInfo->PendingWSARecv, lpBuffer);
 
 #ifndef __LOG_WEB_SERVER_IO
 	char addrtext[16];
@@ -108,7 +108,7 @@ BOOL WebServerPostSend(LPWEB_CLIENT_BUFFER lpBuffer, int IOMode)
 
 	lpBuffer->IOMode = IOMode;
 
-	SafeArrayContainerAddElement(&lpServerInfo->csStats, lpServerInfo->lpPendingWSASend, lpBuffer);
+	SafeArrayContainerAddElement(&lpServerInfo->csStats, &lpServerInfo->PendingWSASend, lpBuffer);
 
 	int err = WSASend(
 		lpClientInfo->Socket,
@@ -148,7 +148,7 @@ BOOL WebServerPostSend(LPWEB_CLIENT_BUFFER lpBuffer, int IOMode)
 		return TRUE;
 	}
 
-	SafeArrayContainerDeleteElementByValue(&lpServerInfo->csStats, lpServerInfo->lpPendingWSASend, lpBuffer);
+	SafeArrayContainerDeleteElementByValue(&lpServerInfo->csStats, &lpServerInfo->PendingWSASend, lpBuffer);
 
 #ifndef __LOG_WEB_SERVER_IO
 	char addrtext[16];
@@ -236,8 +236,8 @@ DWORD WINAPI WebServerThread(LPVOID lp)
 
 					switch (lpBuffer->IOMode)
 					{
-					case IO_RECV: SafeArrayContainerDeleteElementByValue(&lpServerInfo->csStats, lpServerInfo->lpPendingWSARecv, lpBuffer); break;
-					case IO_SEND: SafeArrayContainerDeleteElementByValue(&lpServerInfo->csStats, lpServerInfo->lpPendingWSASend, lpBuffer); break;
+					case IO_RECV: SafeArrayContainerDeleteElementByValue(&lpServerInfo->csStats, &lpServerInfo->PendingWSARecv, lpBuffer); break;
+					case IO_SEND: SafeArrayContainerDeleteElementByValue(&lpServerInfo->csStats, &lpServerInfo->PendingWSASend, lpBuffer); break;
 					}
 
 					DestroyWebClientBuffer(lpBuffer);
@@ -279,8 +279,8 @@ DWORD WINAPI WebServerThread(LPVOID lp)
 
 						switch (lpBuffer->IOMode)
 						{
-						case IO_RECV: SafeArrayContainerDeleteElementByValue(&lpServerInfo->csStats, lpServerInfo->lpPendingWSARecv, lpBuffer); break;
-						case IO_SEND: SafeArrayContainerDeleteElementByValue(&lpServerInfo->csStats, lpServerInfo->lpPendingWSASend, lpBuffer); break;
+						case IO_RECV: SafeArrayContainerDeleteElementByValue(&lpServerInfo->csStats, &lpServerInfo->PendingWSARecv, lpBuffer); break;
+						case IO_SEND: SafeArrayContainerDeleteElementByValue(&lpServerInfo->csStats, &lpServerInfo->PendingWSASend, lpBuffer); break;
 						}
 
 						DestroyWebClientBuffer(lpBuffer);
@@ -353,8 +353,8 @@ DWORD WINAPI WebServerThread(LPVOID lp)
 				// issue
 				switch (lpBuffer->IOMode)
 				{
-				case IO_RECV: SafeArrayContainerDeleteElementByValue(&lpServerInfo->csStats, lpServerInfo->lpPendingWSARecv, lpBuffer); break;
-				case IO_SEND: SafeArrayContainerDeleteElementByValue(&lpServerInfo->csStats, lpServerInfo->lpPendingWSASend, lpBuffer); break;
+				case IO_RECV: SafeArrayContainerDeleteElementByValue(&lpServerInfo->csStats, &lpServerInfo->PendingWSARecv, lpBuffer); break;
+				case IO_SEND: SafeArrayContainerDeleteElementByValue(&lpServerInfo->csStats, &lpServerInfo->PendingWSASend, lpBuffer); break;
 				}
 
 				DestroyWebClientBuffer(lpBuffer);
@@ -373,7 +373,7 @@ DWORD WINAPI WebServerThread(LPVOID lp)
 			switch (lpBuffer->IOMode)
 			{
 			case IO_RECV:
-				SafeArrayContainerDeleteElementByValue(&lpServerInfo->csStats, lpServerInfo->lpPendingWSARecv, lpBuffer);
+				SafeArrayContainerDeleteElementByValue(&lpServerInfo->csStats, &lpServerInfo->PendingWSARecv, lpBuffer);
 
 				lpBuffer->dwLength = dwBytesTransferred;
 
@@ -412,13 +412,13 @@ DWORD WINAPI WebServerThread(LPVOID lp)
 
 				// fragmented packets cause yolo
 				TryPostOrDestroy(WebServerPostSend, lpSendBuffer1, IO_SEND);
-				Sleep(500); // yolo even more
+				//Sleep(500); // yolo even more
 				TryPostOrDestroy(WebServerPostSend, lpSendBuffer2, IO_SEND);
 
 				TryPostOrDestroy(WebServerPostReceive, lpBuffer, IO_RECV);
 				break;
 			case IO_SEND:
-				SafeArrayContainerDeleteElementByValue(&lpServerInfo->csStats, lpServerInfo->lpPendingWSASend, lpBuffer);
+				SafeArrayContainerDeleteElementByValue(&lpServerInfo->csStats, &lpServerInfo->PendingWSASend, lpBuffer);
 
 				// this was a completed send request
 #ifdef __LOG_WEB_ALLOCATIONS
