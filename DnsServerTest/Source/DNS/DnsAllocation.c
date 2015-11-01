@@ -57,7 +57,7 @@ LPDNS_SERVER_INFO AllocateDnsServerInfo()
 	}
 
 #ifdef __LOG_DNS_ALLOCATIONS
-	LoggerWrite(__FUNCTION__ " - Allocated %08x", lpServerInfo);
+	LoggerWrite(__FUNCTION__ " - Allocated %p", lpServerInfo);
 #endif // __LOG_DNS_ALLOCATIONS
 	return lpServerInfo;
 }
@@ -77,7 +77,7 @@ void DestroyDnsServerInfo(LPDNS_SERVER_INFO lpServerInfo)
 		if (WaitForSingleObject(lpServerInfo->NetworkServerThreads.hThreads[i], 3000) == WAIT_TIMEOUT)
 		{
 			TerminateThread(lpServerInfo->NetworkServerThreads.hThreads[i], 0);
-			Error(__FUNCTION__ " - [Warning] Forcefully terminated thread 0x%08x", (DWORD_PTR)lpServerInfo->NetworkServerThreads.hThreads[i]);
+			Error(__FUNCTION__ " - [Warning] Forcefully terminated thread 0x%p", lpServerInfo->NetworkServerThreads.hThreads[i]);
 		}
 		CloseHandle(lpServerInfo->NetworkServerThreads.hThreads[i]);
 	}
@@ -106,7 +106,7 @@ void DestroyDnsServerInfo(LPDNS_SERVER_INFO lpServerInfo)
 		CloseHandle(lpServerInfo->NetworkServerThreads.hIocp);
 
 #ifdef __LOG_DNS_ALLOCATIONS
-	LoggerWrite(__FUNCTION__ " - Destroyed %08x", lpServerInfo);
+	LoggerWrite(__FUNCTION__ " - Destroyed %p", lpServerInfo);
 #endif // __LOG_DNS_ALLOCATIONS
 	free(lpServerInfo);
 }
@@ -129,7 +129,7 @@ static LPDNS_REQUEST_INFO InternalAllocateDnsRequestInfo(LPDNS_SERVER_INFO lpSer
 
 	EnterCriticalSection(&lpServerInfo->csStats);
 	if (!ArrayContainerAddElement(&lpServerInfo->AllocatedRequests, lpRequestInfo, NULL))
-		Error(__FUNCTION__ " - Failed to add lpRequestInfo %08x to lpAllocatedRequests", (ULONG_PTR)lpRequestInfo);
+		Error(__FUNCTION__ " - Failed to add lpRequestInfo %p to lpAllocatedRequests", lpRequestInfo);
 	LeaveCriticalSection(&lpServerInfo->csStats);
 
 	ClearDestroyed(lpRequestInfo);
@@ -153,7 +153,7 @@ LPDNS_REQUEST_INFO AllocateDnsRequestInfo(LPDNS_SERVER_INFO lpServerInfo, SOCKET
 	LPDNS_REQUEST_INFO lpRequestInfo = InternalAllocateDnsRequestInfo(lpServerInfo, Socket, NULL, &dwAllocations);
 
 #ifdef __LOG_DNS_ALLOCATIONS
-	LoggerWrite(__FUNCTION__ " - Allocated %08x (%u allocations)", lpRequestInfo, dwAllocations);
+	LoggerWrite(__FUNCTION__ " - Allocated %p (%u allocations)", lpRequestInfo, dwAllocations);
 #endif // __LOG_DNS_ALLOCATIONS
 
 	return lpRequestInfo;
@@ -163,7 +163,7 @@ LPDNS_REQUEST_INFO CopyDnsRequestInfo(LPDNS_REQUEST_INFO lpOriginalRequestInfo)
 {
 	if (IsDestroyed(lpOriginalRequestInfo))
 	{
-		Error(__FUNCTION__ " - Copying from destroyed object %08x", (ULONG_PTR)lpOriginalRequestInfo);
+		Error(__FUNCTION__ " - Copying from destroyed object %p", lpOriginalRequestInfo);
 		return NULL;
 	}
 
@@ -175,7 +175,7 @@ LPDNS_REQUEST_INFO CopyDnsRequestInfo(LPDNS_REQUEST_INFO lpOriginalRequestInfo)
 		&dwAllocations);
 
 #ifdef __LOG_DNS_ALLOCATIONS
-	LoggerWrite(__FUNCTION__ " - Allocated %08x [COPY OF %08x] (%u allocations)", lpRequestInfo, lpOriginalRequestInfo, dwAllocations);
+	LoggerWrite(__FUNCTION__ " - Allocated %p [COPY OF %p] (%u allocations)", lpRequestInfo, lpOriginalRequestInfo, dwAllocations);
 #endif // __LOG_DNS_ALLOCATIONS
 
 	return lpRequestInfo;
@@ -185,7 +185,7 @@ void DestroyDnsRequestInfo(LPDNS_REQUEST_INFO lpRequestInfo)
 {
 	if (IsDestroyed(lpRequestInfo))
 	{
-		Error(__FUNCTION__ " - DESTROYING ALREADY DESTROYED OBJECT %08x", (ULONG_PTR)lpRequestInfo);
+		Error(__FUNCTION__ " - DESTROYING ALREADY DESTROYED OBJECT %p", lpRequestInfo);
 		int* a = 0;
 		*a = 0;
 	}
@@ -196,7 +196,7 @@ void DestroyDnsRequestInfo(LPDNS_REQUEST_INFO lpRequestInfo)
 
 	EnterCriticalSection(&lpServerInfo->csAllocRequest);
 #ifdef __LOG_DNS_ALLOCATIONS
-	LoggerWrite(__FUNCTION__ " - Destroyed %08x (%u allocations)", lpRequestInfo, lpServerInfo->dwAllocatedRequests - 1);
+	LoggerWrite(__FUNCTION__ " - Destroyed %p (%u allocations)", lpRequestInfo, lpServerInfo->dwAllocatedRequests - 1);
 #endif // __LOG_DNS_ALLOCATIONS
 	if (lpServerInfo->dwAllocatedRequests == 0)
 	{
@@ -206,7 +206,7 @@ void DestroyDnsRequestInfo(LPDNS_REQUEST_INFO lpRequestInfo)
 
 	EnterCriticalSection(&lpServerInfo->csStats);
 	if (!ArrayContainerDeleteElementByValue(&lpServerInfo->AllocatedRequests, lpRequestInfo))
-		Error(__FUNCTION__ " - Failed to remove lpRequestInfo %08x from lpAllocatedRequests", (ULONG_PTR)lpRequestInfo);
+		Error(__FUNCTION__ " - Failed to remove lpRequestInfo %p from lpAllocatedRequests", lpRequestInfo);
 	LeaveCriticalSection(&lpServerInfo->csStats);
 
 	lpRequestInfo->next = lpServerInfo->lpFreeRequests;

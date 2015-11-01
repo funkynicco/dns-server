@@ -4,7 +4,7 @@
 /*
 EnterCriticalSection(&lpServerInfo->csStats);
 if (!ArrayContainerDeleteElementByValue(lpServerInfo->lpPendingWSARecv, lpBuffer))
-Error(__FUNCTION__ " - %08x - %s not found in lpPendingWSARecv", (ULONG_PTR)lpBuffer, GetIOMode(lpBuffer->IOMode));
+Error(__FUNCTION__ " - %p - %s not found in lpPendingWSARecv", (ULONG_PTR)lpBuffer, GetIOMode(lpBuffer->IOMode));
 LeaveCriticalSection(&lpServerInfo->csStats);
 */
 
@@ -14,7 +14,7 @@ LeaveCriticalSection(&lpServerInfo->csStats);
 		Error(__FUNCTION__ " - " #_Function " returned FALSE, NumberOfBuffers: %u", _Buffer->lpClientInfo->NumberOfBuffers); \
 		if (InterlockedDecrement(&_Buffer->lpClientInfo->NumberOfBuffers) == 0) \
 		{ \
-			Error(__FUNCTION__ " WARNING: remove client %08x", (ULONG_PTR)lpClientInfo); \
+			Error(__FUNCTION__ " WARNING: remove client %p", lpClientInfo); \
 			SocketPoolDestroySocket(SOCKETTYPE_TCP, lpClientInfo->Socket); \
 			DestroyWebClientInfo(lpClientInfo); \
 		} \
@@ -56,7 +56,7 @@ BOOL WebServerPostReceive(LPWEB_CLIENT_BUFFER lpBuffer, int IOMode)
 		// completed directly
 #ifdef __LOG_WEB_SERVER_IO
 		LoggerWrite(
-			__FUNCTION__ " - WARNING - WSARecv completed directly - Socket: %u, lpBuffer: %08x, IOMode: %s, target: %s",
+			__FUNCTION__ " - WARNING - WSARecv completed directly - Socket: %u, lpBuffer: %p, IOMode: %s, target: %s",
 			lpClientInfo->Socket,
 			(ULONG_PTR)lpBuffer,
 			GetIOMode(lpBuffer->IOMode),
@@ -71,7 +71,7 @@ BOOL WebServerPostReceive(LPWEB_CLIENT_BUFFER lpBuffer, int IOMode)
 	{
 #ifdef __LOG_WEB_SERVER_IO
 		LoggerWrite(
-			__FUNCTION__ " - Posted WSARecv - Socket: %u, lpBuffer: %08x, IOMode: %s, target: %s",
+			__FUNCTION__ " - Posted WSARecv - Socket: %u, lpBuffer: %p, IOMode: %s, target: %s",
 			lpClientInfo->Socket,
 			(ULONG_PTR)lpBuffer,
 			GetIOMode(lpBuffer->IOMode),
@@ -124,7 +124,7 @@ BOOL WebServerPostSend(LPWEB_CLIENT_BUFFER lpBuffer, int IOMode)
 		// completed directly, do we need to do anything here?
 #ifdef __LOG_WEB_SERVER_IO
 		LoggerWrite(
-			__FUNCTION__ " - WARNING - WSASend completed directly - Socket: %u, lpBuffer: %08x, IOMode: %s, target: %s",
+			__FUNCTION__ " - WARNING - WSASend completed directly - Socket: %u, lpBuffer: %p, IOMode: %s, target: %s",
 			lpClientInfo->Socket,
 			(ULONG_PTR)lpBuffer,
 			GetIOMode(lpBuffer->IOMode),
@@ -139,7 +139,7 @@ BOOL WebServerPostSend(LPWEB_CLIENT_BUFFER lpBuffer, int IOMode)
 	{
 #ifdef __LOG_WEB_SERVER_IO
 		LoggerWrite(
-			__FUNCTION__ " - Posted WSASend - Socket: %u, lpBuffer: %08x, IOMode: %s, target: %s",
+			__FUNCTION__ " - Posted WSASend - Socket: %u, lpBuffer: %p, IOMode: %s, target: %s",
 			lpClientInfo->Socket,
 			(ULONG_PTR)lpBuffer,
 			GetIOMode(lpBuffer->IOMode),
@@ -220,7 +220,7 @@ DWORD WINAPI WebServerThread(LPVOID lp)
 		{
 			DWORD dwError = GetLastError();
 			//LoggerWrite(__FUNCTION__ " - [FAILED] GetQueuedCompletionStatus returned FALSE: %s", GetErrorMessage(dwError));
-			//LoggerWrite(__FUNCTION__ " - FAILURE INFO[dw: %u, key: %u, lp: %08x]", dwBytesTransferred, ulCompletionKey, (ULONG_PTR)lpOverlapped);
+			//LoggerWrite(__FUNCTION__ " - FAILURE INFO[dw: %u, key: %u, lp: %p]", dwBytesTransferred, ulCompletionKey, (ULONG_PTR)lpOverlapped);
 
 			switch (dwError)
 			{
@@ -232,7 +232,7 @@ DWORD WINAPI WebServerThread(LPVOID lp)
 					LPWEB_CLIENT_BUFFER lpBuffer = (LPWEB_CLIENT_BUFFER)lpOverlapped;
 					LPWEB_CLIENT_INFO lpClientInfo = lpBuffer->lpClientInfo;
 
-					Error(__FUNCTION__ " I/O failed - lpBuffer: %08x, remaining buffers: %u", (ULONG_PTR)lpBuffer, lpClientInfo->NumberOfBuffers);
+					Error(__FUNCTION__ " I/O failed - lpBuffer: %p, remaining buffers: %u", lpBuffer, lpClientInfo->NumberOfBuffers);
 
 					switch (lpBuffer->IOMode)
 					{
@@ -247,7 +247,7 @@ DWORD WINAPI WebServerThread(LPVOID lp)
 					if (InterlockedDecrement(&lpClientInfo->NumberOfBuffers) == 0)
 					{
 						// remove client
-						Error(__FUNCTION__ " WARNING: remove client %08x", (ULONG_PTR)lpClientInfo);
+						Error(__FUNCTION__ " WARNING: remove client %p", lpClientInfo);
 						SocketPoolDestroySocket(SOCKETTYPE_TCP, lpClientInfo->Socket);
 						DestroyWebClientInfo(lpClientInfo);
 					}
@@ -260,7 +260,7 @@ DWORD WINAPI WebServerThread(LPVOID lp)
 				{
 					if (lpOverlapped == &lpServerInfo->AcceptContext.Overlapped)
 					{
-						Error(__FUNCTION__ " - Canceled WSAAccept (socket %u)", lpServerInfo->ListenSocket);
+						Error(__FUNCTION__ " - Canceled WSAAccept (socket %Id)", lpServerInfo->ListenSocket);
 						lpServerInfo->bOutstandingAccept = FALSE;
 						SocketPoolDestroySocket(SOCKETTYPE_TCP, lpServerInfo->AcceptContext.Socket);
 					}
@@ -271,8 +271,8 @@ DWORD WINAPI WebServerThread(LPVOID lp)
 
 #ifdef __LOG_WEB_SERVER_IO
 						LoggerWrite(
-							__FUNCTION__ " - I/O request %08x canceled, IOMode: %s, Socket: %u",
-							(ULONG_PTR)lpBuffer,
+							__FUNCTION__ " - I/O request %p canceled, IOMode: %s, Socket: %Id",
+							lpBuffer,
 							GetIOMode(lpBuffer->IOMode),
 							lpBuffer->lpClientInfo->Socket);
 #endif // __LOG_WEB_SERVER_IO
@@ -288,7 +288,7 @@ DWORD WINAPI WebServerThread(LPVOID lp)
 						if (InterlockedDecrement(&lpClientInfo->NumberOfBuffers) == 0)
 						{
 							// remove client
-							Error(__FUNCTION__ " WARNING: remove client %08x", (ULONG_PTR)lpClientInfo);
+							Error(__FUNCTION__ " WARNING: remove client %p", lpClientInfo);
 							SocketPoolDestroySocket(SOCKETTYPE_TCP, lpClientInfo->Socket);
 							DestroyWebClientInfo(lpClientInfo);
 						}
@@ -298,11 +298,11 @@ DWORD WINAPI WebServerThread(LPVOID lp)
 			default:
 				Error(
 					__FUNCTION__ " - GetQueuedCompletionStatus returned FALSE, code: %u "
-					"(dwBytesTransferred: %d, ulCompletionKey: %u, lpOverlapped: %08x)\r\n%s",
+					"(dwBytesTransferred: %d, ulCompletionKey: %Id, lpOverlapped: %p)\r\n%s",
 					GetLastError(),
 					dwBytesTransferred,
 					ulCompletionKey,
-					(ULONG_PTR)lpOverlapped,
+					lpOverlapped,
 					GetErrorMessage(GetLastError()));
 				break;
 			}
@@ -332,10 +332,10 @@ DWORD WINAPI WebServerThread(LPVOID lp)
 			strcpy(addrtext, "AcceptEx");
 
 		LoggerWrite(
-			__FUNCTION__ " - dwBytesTransferred: %u, ulCompletionKey: %u, lpOverlapped: %08x, IOMode: %s, Socket: %u [from %s]",
+			__FUNCTION__ " - dwBytesTransferred: %u, ulCompletionKey: %u, lpOverlapped: %p, IOMode: %s, Socket: %Id [from %s]",
 			dwBytesTransferred,
 			ulCompletionKey,
-			(ULONG_PTR)lpOverlapped,
+			lpOverlapped,
 			GetIOMode(IOMode),
 			Socket,
 			addrtext);
@@ -362,7 +362,7 @@ DWORD WINAPI WebServerThread(LPVOID lp)
 				if (InterlockedDecrement(&lpClientInfo->NumberOfBuffers) == 0)
 				{
 					// remove client
-					Error(__FUNCTION__ " WARNING: (client connection closed) remove client %08x", (ULONG_PTR)lpClientInfo);
+					Error(__FUNCTION__ " WARNING: (client connection closed) remove client %p", lpClientInfo);
 					SocketPoolDestroySocket(SOCKETTYPE_TCP, lpClientInfo->Socket);
 					DestroyWebClientInfo(lpClientInfo);
 				}
@@ -391,7 +391,7 @@ DWORD WINAPI WebServerThread(LPVOID lp)
 				}
 				*tptr = 0;
 
-				LoggerWrite(__FUNCTION__ " - [from %s, lpBuffer: %08x] Received %u bytes: %s", addrtext, (ULONG_PTR)lpBuffer, lpBuffer->dwLength, textbuf);
+				LoggerWrite(__FUNCTION__ " - [from %s, lpBuffer: %p] Received %u bytes: %s", addrtext, lpBuffer, lpBuffer->dwLength, textbuf);
 
 				char str[512];
 				int str_len = sprintf(str, "request OK - t: %llu", time(NULL));
@@ -422,7 +422,7 @@ DWORD WINAPI WebServerThread(LPVOID lp)
 
 				// this was a completed send request
 #ifdef __LOG_WEB_ALLOCATIONS
-				LoggerWrite(__FUNCTION__ " - Destroyed %s lpBuffer : %08x", GetIOMode(lpBuffer->IOMode), (ULONG_PTR)lpBuffer);
+				LoggerWrite(__FUNCTION__ " - Destroyed %s lpBuffer : %p", GetIOMode(lpBuffer->IOMode), lpBuffer);
 #endif // __LOG_WEB_ALLOCATIONS
 				
 				DestroyWebClientBuffer(lpBuffer);
@@ -430,7 +430,7 @@ DWORD WINAPI WebServerThread(LPVOID lp)
 				if (InterlockedDecrement(&lpClientInfo->NumberOfBuffers) == 0)
 				{
 					// remove client
-					Error(__FUNCTION__ " WARNING: (client connection closed) remove client %08x", (ULONG_PTR)lpClientInfo);
+					Error(__FUNCTION__ " WARNING: (client connection closed) remove client %p", lpClientInfo);
 					SocketPoolDestroySocket(SOCKETTYPE_TCP, lpClientInfo->Socket);
 					DestroyWebClientInfo(lpClientInfo);
 				}
@@ -484,7 +484,7 @@ DWORD WINAPI WebServerThread(LPVOID lp)
 			{
 				DWORD dwError = GetLastError();
 
-				Error(__FUNCTION__ " - Failed to associate socket %u with I/O completion port: %s",
+				Error(__FUNCTION__ " - Failed to associate socket %Id with I/O completion port: %s",
 					lpServerInfo->AcceptContext.Socket,
 					GetErrorMessage(dwError));
 

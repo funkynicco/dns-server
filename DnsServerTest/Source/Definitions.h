@@ -11,10 +11,10 @@
  * DNS Server
  ***************************************************************************************/
 // Log all allocations done
-//#define __LOG_DNS_ALLOCATIONS
+#define __LOG_DNS_ALLOCATIONS // temp
 
 // Log server I/O related
-//#define __LOG_DNS_SERVER_IO
+#define __LOG_DNS_SERVER_IO // temp
 
 // Log requests
 #define __LOG_DNS_REQUESTS

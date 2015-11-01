@@ -136,10 +136,10 @@ void WebServerStop(LPWEB_SERVER_INFO lpServerInfo)
 			if (!CancelIoEx((HANDLE)lpClientInfo->Socket, NULL))
 			{
 				DWORD dwError = GetLastError();
-				Error(__FUNCTION__ " - Failed to cancel pending I/O operations on client socket: %u, code: %u - %s", lpClientInfo->Socket, dwError, GetErrorMessage(dwError));
+				Error(__FUNCTION__ " - Failed to cancel pending I/O operations on client socket: %Id, code: %u - %s", lpClientInfo->Socket, dwError, GetErrorMessage(dwError));
 			}
 			else
-				LoggerWrite(__FUNCTION__ " - CancelIoEx on client socket %u, NumberOfBuffers: %u", lpClientInfo->Socket, lpClientInfo->NumberOfBuffers);
+				LoggerWrite(__FUNCTION__ " - CancelIoEx on client socket %Id, NumberOfBuffers: %u", lpClientInfo->Socket, lpClientInfo->NumberOfBuffers);
 		}
 		LeaveCriticalSection(&lpServerInfo->csAllocClient);
 
@@ -156,7 +156,7 @@ void WebServerStop(LPWEB_SERVER_INFO lpServerInfo)
 			if (i > 0) \
 				ptrAllocData += sprintf(ptrAllocData, ", "); \
 \
-			ptrAllocData += sprintf(ptrAllocData, "%08x", (ULONG_PTR)(__lpArray)->pElem[i]); \
+			ptrAllocData += sprintf(ptrAllocData, "%p", (__lpArray)->pElem[i]); \
 		} \
 		*ptrAllocData = 0;
 

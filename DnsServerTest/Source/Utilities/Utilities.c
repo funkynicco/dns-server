@@ -30,6 +30,7 @@ void MakeSocketAddress(LPSOCKADDR_IN lpAddr, const char* address, u_short port)
 	lpAddr->sin_port = htons(port);
 }
 
+#ifdef __DNS_SERVER_TEST
 void FlipDnsHeader(LPDNS_HEADER lpDnsHeader)
 {
 	lpDnsHeader->TransactionID = ntohs(lpDnsHeader->TransactionID);
@@ -39,6 +40,7 @@ void FlipDnsHeader(LPDNS_HEADER lpDnsHeader)
 	lpDnsHeader->NumberOfAuthorities = ntohs(lpDnsHeader->NumberOfAuthorities);
 	lpDnsHeader->NumberOfAdditional = ntohs(lpDnsHeader->NumberOfAdditional);
 }
+#endif // __DNS_SERVER_TEST
 
 BOOL GetErrorMessageBuffer(DWORD dwError, LPSTR lpOutput, DWORD dwSizeOfOutput)
 {
@@ -84,7 +86,7 @@ LPCSTR GetErrorMessage(DWORD dwError)
 	else
 		ptr += sprintf(ptr, "[E_CODE:%u] - ", dwError);
 
-	if (!GetErrorMessageBuffer(dwError, ptr, end - ptr))
+	if (!GetErrorMessageBuffer(dwError, ptr, (DWORD)(end - ptr)))
 		return "[Unknown error code]";
 
 	return g_internalErrorMessageBuffer;
@@ -107,6 +109,7 @@ LPCSTR GetErrorName(DWORD dwError)
 	return g_internalErrorNameBuffer;
 }
 
+#ifdef __DNS_SERVER_TEST
 void AssembleDomainFromLabels(LPSTR lpOutput, char aLabels[16][64], DWORD dwNumLabels)
 {
 	for (DWORD i = 0; i < dwNumLabels; ++i)
@@ -120,6 +123,7 @@ void AssembleDomainFromLabels(LPSTR lpOutput, char aLabels[16][64], DWORD dwNumL
 
 	*lpOutput = 0;
 }
+#endif // __DNS_SERVER_TEST
 
 LPCSTR GetIOMode(int IOMode)
 {

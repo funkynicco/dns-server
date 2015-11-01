@@ -11,7 +11,7 @@
 { \
 	EnterCriticalSection(_CriticalSection); \
 	if (!ArrayContainerDeleteElementByValue(_Array, _Value)) \
-		Error(__FUNCTION__ " - %08x not found in " #_Array, (ULONG_PTR)_Value); \
+		Error(__FUNCTION__ " - %p not found in " #_Array, _Value); \
 	LeaveCriticalSection(_CriticalSection); \
 }
 
@@ -77,7 +77,7 @@ static BOOL ArrayContainerAddElement(LPARRAY_CONTAINER lpArray, LPVOID lpElem, L
 		lpArray->dwCapacity = dwNewCapacity;
 
 #ifdef _DEBUG
-		LoggerWrite(__FUNCTION__ " - Reallocated %08x => %08x, added %u new elements",
+		LoggerWrite(__FUNCTION__ " - Reallocated %p => %p, added %u new elements",
 			(ULONG_PTR)lpArray->pElem,
 			(ULONG_PTR)lpNewElem,
 			dwNewCapacity - lpArray->dwCapacity);
@@ -123,7 +123,7 @@ static BOOL ArrayContainerDeleteElementByValue(LPARRAY_CONTAINER lpArray, LPVOID
 		if (lpArray->pElem[i] == lpElem)
 		{
 			if (bFound)
-				Error(__FUNCTION__ " - Multiple entries of same value %08x", (ULONG_PTR)lpElem);
+				Error(__FUNCTION__ " - Multiple entries of same value %p", lpElem);
 
 			ArrayContainerDeleteElement(lpArray, i);
 			bFound = TRUE;
@@ -156,7 +156,7 @@ static void TestArrayContainer()
 		if (i > 0) \
 			printf(", "); \
  \
-		printf("%u", (ULONG_PTR)Array.pElem[i]); \
+		printf("%p", Array.pElem[i]); \
 	} \
 	printf("\n");
 	////////////////////////////////////////////////////////////////////

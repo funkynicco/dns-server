@@ -28,3 +28,24 @@ typedef struct _tagAcceptContext
 	DWORD dwBytesReceived; // unused
 
 } ACCEPT_CONTEXT, *LPACCEPT_CONTEXT;
+
+#define MAX_LOG_MESSAGE 384
+
+enum
+{
+	LOGFLAG_NONE,
+	LOGFLAG_SET_LAST_ID
+};
+
+typedef struct _tagLogMessage
+{
+	DWORD dwThread;
+	int Flags; // LOGFLAG_*
+	LONGLONG Id;
+	time_t tmTime;
+	DWORD dwLength;
+	char Message[MAX_LOG_MESSAGE]; // MAX_LOG_MESSAGE is including the \0, so must be accounted for!
+
+} LOG_MESSAGE, *LPLOG_MESSAGE;
+
+#define MIN_LOG_MESSAGE_SIZE ((ULONG_PTR)&(((LPLOG_MESSAGE)0)->Message))

@@ -67,6 +67,9 @@
     <ClInclude Include="Source\Web\WebServer.h">
       <Filter>Source\Web</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Containers\CircularBuffer.h">
+      <Filter>Source\Containers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Main.c">

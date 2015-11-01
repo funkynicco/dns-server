@@ -88,7 +88,7 @@ void DnsRequestTimeoutSetCancelTimeout(LPDNS_REQUEST_TIMEOUT_HANDLER lpHandler, 
 	{
 		if (lpObj->lpRequestInfo == lpRequestInfo)
 		{
-			Error(__FUNCTION__ " - lpRequestInfo %08x already found in lpAllocatedRequests", (ULONG_PTR)lpRequestInfo);
+			Error(__FUNCTION__ " - lpRequestInfo %p already found in lpAllocatedRequests", lpRequestInfo);
 			break;
 		}
 	}
@@ -99,7 +99,7 @@ void DnsRequestTimeoutSetCancelTimeout(LPDNS_REQUEST_TIMEOUT_HANDLER lpHandler, 
 			!InternalDnsRequestTimeoutCreateBlock(lpHandler))
 		{
 			LeaveCriticalSection(&lpHandler->csLock);
-			Error(__FUNCTION__ " - Failed to allocate more blocks for lpRequestInfo: %08x", (ULONG_PTR)lpRequestInfo);
+			Error(__FUNCTION__ " - Failed to allocate more blocks for lpRequestInfo: %p", lpRequestInfo);
 			return;
 		}
 
@@ -161,14 +161,14 @@ void DnsRequestTimeoutProcess(LPDNS_REQUEST_TIMEOUT_HANDLER lpHandler)
 		{
 			if (!CancelIoEx((HANDLE)lpObj->lpRequestInfo->Socket, &lpObj->lpRequestInfo->Overlapped))
 			{
-				Error(__FUNCTION__ " - CancelIoEx [lpRequestInfo: %08x, Socket: %u] failed with code %u - %s",
-					(ULONG_PTR)lpObj->lpRequestInfo,
+				Error(__FUNCTION__ " - CancelIoEx [lpRequestInfo: %p, Socket: %Id] failed with code %u - %s",
+					lpObj->lpRequestInfo,
 					lpObj->lpRequestInfo->Socket,
 					GetLastError(),
 					GetErrorMessage(GetLastError()));
 			}
 			else
-				Error(__FUNCTION__ " - %08x timed out", (ULONG_PTR)lpObj->lpRequestInfo);
+				Error(__FUNCTION__ " - %p timed out", lpObj->lpRequestInfo);
 
 			// remove
 			InternalDnsRequestTimeoutRemoveObject(lpHandler, lpObj);

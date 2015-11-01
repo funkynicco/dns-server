@@ -70,7 +70,7 @@ void DestroyDnsResolver()
 		if (WaitForSingleObject(DRP->Threads.hThreads[i], 3000) == WAIT_TIMEOUT)
 		{
 			TerminateThread(DRP->Threads.hThreads[i], 0);
-			Error(__FUNCTION__ " - [Warning] Forcefully terminated thread 0x%08x", (DWORD_PTR)DRP->Threads.hThreads[i]);
+			Error(__FUNCTION__ " - [Warning] Forcefully terminated thread 0x%p", DRP->Threads.hThreads[i]);
 		}
 
 		CloseHandle(DRP->Threads.hThreads[i]);
@@ -92,8 +92,8 @@ void ResolveDns(LPDNS_REQUEST_INFO lpRequestInfo)
 	lpRelayRequestInfo->Socket = SocketPoolAllocateSocket(SOCKETTYPE_UDP);
 	if (lpRelayRequestInfo->Socket == INVALID_SOCKET)
 	{
-		Error(__FUNCTION__ " - Failed to create new socket for resolving DNS [request %08x], code: %u - %s",
-			(ULONG_PTR)lpRequestInfo,
+		Error(__FUNCTION__ " - Failed to create new socket for resolving DNS [request %p], code: %u - %s",
+			lpRequestInfo,
 			WSAGetLastError(),
 			GetErrorMessage(WSAGetLastError()));
 		DestroyDnsRequestInfo(lpRelayRequestInfo->lpInnerRequest);
@@ -102,9 +102,9 @@ void ResolveDns(LPDNS_REQUEST_INFO lpRequestInfo)
 
 	if (CreateIoCompletionPort((HANDLE)lpRelayRequestInfo->Socket, DRP->Threads.hIocp, 1, DRP->Threads.dwNumberOfThreads) != DRP->Threads.hIocp)
 	{
-		Error(__FUNCTION__ " - Failed to associate socket (%u) with IOCP [request %08x], code: %u - %s",
+		Error(__FUNCTION__ " - Failed to associate socket (%Id) with IOCP [request %p], code: %u - %s",
 			lpRequestInfo->Socket,
-			(ULONG_PTR)lpRequestInfo,
+			lpRequestInfo,
 			GetLastError(),
 			GetErrorMessage(GetLastError()));
 		SOCKETPOOL_SAFE_DESTROY(SOCKETTYPE_UDP, lpRelayRequestInfo->Socket);
@@ -155,7 +155,7 @@ DWORD WINAPI DnsResolveHandler(LPVOID lp)
 				{
 #ifdef __LOG_DNS_SERVER_IO
 					LoggerWrite(
-						__FUNCTION__ " - I/O request %08x canceled, IOMode: %s, Socket: %u",
+						__FUNCTION__ " - I/O request %p canceled, IOMode: %s, Socket: %Id",
 						(ULONG_PTR)lpRequestInfo,
 						GetIOMode(lpRequestInfo->IOMode),
 						lpRequestInfo->Socket);
@@ -168,13 +168,13 @@ DWORD WINAPI DnsResolveHandler(LPVOID lp)
 
 						EnterCriticalSection(&DRP->lpServerInfo->csStats);
 						if (!ArrayContainerDeleteElementByValue(&DRP->lpServerInfo->PendingWSARecvFrom, lpRequestInfo))
-							Error(__FUNCTION__ " - %08x - %s not found in lpPendingWSARecvFrom", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
+							Error(__FUNCTION__ " - %p - %s not found in lpPendingWSARecvFrom", lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
 						LeaveCriticalSection(&DRP->lpServerInfo->csStats);
 						break;
 					case IO_RELAY_SEND:
 						EnterCriticalSection(&DRP->lpServerInfo->csStats);
 						if (!ArrayContainerDeleteElementByValue(&DRP->lpServerInfo->PendingWSASendTo, lpRequestInfo))
-							Error(__FUNCTION__ " - %08x - %s not found in lpPendingWSASendTo", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
+							Error(__FUNCTION__ " - %p - %s not found in lpPendingWSASendTo", lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
 						LeaveCriticalSection(&DRP->lpServerInfo->csStats);
 						break;
 					}
@@ -191,11 +191,11 @@ DWORD WINAPI DnsResolveHandler(LPVOID lp)
 			default:
 				Error(
 					__FUNCTION__ " - GetQueuedCompletionStatus returned FALSE, code: %u "
-					"(dwBytesTransferred: %d, ulCompletionKey: %u, lpRequestInfo: %08x, Socket: %u)\r\n%s",
+					"(dwBytesTransferred: %d, ulCompletionKey: %Id, lpRequestInfo: %p, Socket: %Id)\r\n%s",
 					GetLastError(),
 					dwBytesTransferred,
 					ulCompletionKey,
-					(ULONG_PTR)lpRequestInfo,
+					lpRequestInfo,
 					lpRequestInfo->Socket,
 					GetErrorMessage(GetLastError()));
 				break;
@@ -213,10 +213,10 @@ DWORD WINAPI DnsResolveHandler(LPVOID lp)
 		GetIPFromSocketAddress(&lpRequestInfo->SocketAddress, addrtext, sizeof(addrtext));
 
 		LoggerWrite(
-			__FUNCTION__ " - dwBytesTransferred: %u, ulCompletionKey: %u, lpRequestInfo: %08x, IOMode: %s, Socket: %u [from %s]",
+			__FUNCTION__ " - dwBytesTransferred: %u, ulCompletionKey: %u, lpRequestInfo: %p, IOMode: %s, Socket: %Id [from %s]",
 			dwBytesTransferred,
 			ulCompletionKey,
-			(ULONG_PTR)lpRequestInfo,
+			lpRequestInfo,
 			GetIOMode(lpRequestInfo->IOMode),
 			lpRequestInfo->Socket,
 			addrtext);
@@ -229,7 +229,7 @@ DWORD WINAPI DnsResolveHandler(LPVOID lp)
 
 			EnterCriticalSection(&DRP->lpServerInfo->csStats);
 			if (!ArrayContainerDeleteElementByValue(&DRP->lpServerInfo->PendingWSARecvFrom, lpRequestInfo))
-				Error(__FUNCTION__ " - %08x - %s not found in lpPendingWSARecvFrom", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
+				Error(__FUNCTION__ " - %p - %s not found in lpPendingWSARecvFrom", lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
 			LeaveCriticalSection(&DRP->lpServerInfo->csStats);
 
 			lpRequestInfo->dwLength = dwBytesTransferred;
@@ -243,7 +243,7 @@ DWORD WINAPI DnsResolveHandler(LPVOID lp)
 				lpRequestInfo->Socket = lpRequestInfo->lpInnerRequest->Socket;
 
 #ifdef __LOG_DNS_ALLOCATIONS
-				LoggerWrite(__FUNCTION__ " [IO_RELAY_RECV]- Destroyed inner %s lpRequestInfo : %08x", GetIOMode(lpRequestInfo->lpInnerRequest->IOMode), (ULONG_PTR)lpRequestInfo->lpInnerRequest);
+				LoggerWrite(__FUNCTION__ " [IO_RELAY_RECV]- Destroyed inner %s lpRequestInfo : %p", GetIOMode(lpRequestInfo->lpInnerRequest->IOMode), lpRequestInfo->lpInnerRequest);
 #endif // __LOG_DNS_ALLOCATIONS
 				DestroyDnsRequestInfo(lpRequestInfo->lpInnerRequest);
 				lpRequestInfo->lpInnerRequest = NULL;
@@ -252,9 +252,9 @@ DWORD WINAPI DnsResolveHandler(LPVOID lp)
 			}
 			else
 			{
-				Error(__FUNCTION__ " - (%08x %s) lpInnerRequest is NULL!", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
+				Error(__FUNCTION__ " - (%p %s) lpInnerRequest is NULL!", lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
 #ifdef __LOG_DNS_ALLOCATIONS
-				LoggerWrite(__FUNCTION__ " - Destroyed %s lpRequestInfo : %08x", GetIOMode(lpRequestInfo->IOMode), (ULONG_PTR)lpRequestInfo);
+				LoggerWrite(__FUNCTION__ " - Destroyed %s lpRequestInfo : %p", GetIOMode(lpRequestInfo->IOMode), lpRequestInfo);
 #endif // __LOG_DNS_ALLOCATIONS
 				DestroyDnsRequestInfo(lpRequestInfo);
 			}
@@ -262,15 +262,15 @@ DWORD WINAPI DnsResolveHandler(LPVOID lp)
 		case IO_RELAY_SEND:
 			EnterCriticalSection(&DRP->lpServerInfo->csStats);
 			if (!ArrayContainerDeleteElementByValue(&DRP->lpServerInfo->PendingWSASendTo, lpRequestInfo))
-				Error(__FUNCTION__ " - %08x - %s not found in lpPendingWSASendTo", (ULONG_PTR)lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
+				Error(__FUNCTION__ " - %p - %s not found in lpPendingWSASendTo", lpRequestInfo, GetIOMode(lpRequestInfo->IOMode));
 			LeaveCriticalSection(&DRP->lpServerInfo->csStats);
 #ifdef __LOG_DNS_ALLOCATIONS
-			LoggerWrite(__FUNCTION__ " - Destroyed %s lpRequestInfo : %08x", GetIOMode(lpRequestInfo->IOMode), (ULONG_PTR)lpRequestInfo);
+			LoggerWrite(__FUNCTION__ " - Destroyed %s lpRequestInfo : %p", GetIOMode(lpRequestInfo->IOMode), lpRequestInfo);
 #endif // __LOG_DNS_ALLOCATIONS
 			if (lpRequestInfo->lpInnerRequest)
 			{
 #ifdef __LOG_DNS_ALLOCATIONS
-				LoggerWrite(__FUNCTION__ " [EXTRA]- Destroyed inner %s lpRequestInfo : %08x", GetIOMode(lpRequestInfo->lpInnerRequest->IOMode), (ULONG_PTR)lpRequestInfo->lpInnerRequest);
+				LoggerWrite(__FUNCTION__ " [EXTRA]- Destroyed inner %s lpRequestInfo : %p", GetIOMode(lpRequestInfo->lpInnerRequest->IOMode), lpRequestInfo->lpInnerRequest);
 #endif // __LOG_DNS_ALLOCATIONS
 				DestroyDnsRequestInfo(lpRequestInfo->lpInnerRequest);
 				lpRequestInfo->lpInnerRequest = NULL;
@@ -278,9 +278,9 @@ DWORD WINAPI DnsResolveHandler(LPVOID lp)
 			DestroyDnsRequestInfo(lpRequestInfo);
 			break;
 		default:
-			Error(__FUNCTION__ " - [ERROR] Unknown IOMode: %s on request %08x [Socket: %u] (request destroyed)",
+			Error(__FUNCTION__ " - [ERROR] Unknown IOMode: %s on request %p [Socket: %Id] (request destroyed)",
 				GetIOMode(lpRequestInfo->IOMode),
-				(ULONG_PTR)lpRequestInfo,
+				lpRequestInfo,
 				lpRequestInfo->Socket);
 			if (lpRequestInfo->lpInnerRequest)
 				DestroyDnsRequestInfo(lpRequestInfo->lpInnerRequest);

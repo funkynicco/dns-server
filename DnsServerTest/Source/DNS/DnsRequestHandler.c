@@ -59,7 +59,7 @@ void DnsRequestHandlerShutdown(LPDNS_SERVER_INFO lpServerInfo)
 		if (WaitForSingleObject(lpRequestHandlerThreads->hThreads[i], 3000) == WAIT_TIMEOUT)
 		{
 			TerminateThread(lpRequestHandlerThreads->hThreads[i], 0);
-			Error(__FUNCTION__ " - [Warning] Forcefully terminated thread 0x%08x", (DWORD_PTR)lpRequestHandlerThreads->hThreads[i]);
+			Error(__FUNCTION__ " - [Warning] Forcefully terminated thread 0x%p", lpRequestHandlerThreads->hThreads[i]);
 		}
 
 		CloseHandle(lpRequestHandlerThreads->hThreads[i]);

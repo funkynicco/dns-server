@@ -4,8 +4,8 @@
 void CheckOutstandingIO(LPDNS_SERVER_INFO lpServerInfo)
 {
 	EnterCriticalSection(&lpServerInfo->csStats);
-	DWORD dwPendingWSARecvFrom = lpServerInfo->lpPendingWSARecvFrom->dwElementNum;
-	DWORD dwPendingWSASendTo = lpServerInfo->lpPendingWSASendTo->dwElementNum;
+	DWORD dwPendingWSARecvFrom = lpServerInfo->PendingWSARecvFrom.dwElementNum;
+	DWORD dwPendingWSASendTo = lpServerInfo->PendingWSASendTo.dwElementNum;
 	LeaveCriticalSection(&lpServerInfo->csStats);
 
 	static BOOL bInitial = TRUE;
@@ -52,7 +52,10 @@ BOOL Initialize(struct ServerParameters* lp)
 		return FALSE;
 	}
 
-	LoggerInitialize(); // This must always be first because all logging depend on it
+	WSAStartup(MAKEWORD(2, 2), &lp->WSAData);
+	SetInit(INIT_WSADATA);
+
+	LoggerInitialize(); // This must always be first (after WSAStartup) because all logging depend on it
 	SetInit(INIT_LOGGER);
 
 	if (!LoadConfiguration())
@@ -70,9 +73,6 @@ BOOL Initialize(struct ServerParameters* lp)
 		Error("/// (Failure) No service configured to run in config.cfg ///");
 		return FALSE;
 	}
-
-	WSAStartup(MAKEWORD(2, 2), &lp->WSAData);
-	SetInit(INIT_WSADATA);
 
 	InitializeSocketPool();
 	SetInit(INIT_SOCKET_POOL);
@@ -133,11 +133,11 @@ void Uninitalize(struct ServerParameters* lp)
 	if (lp->Initialized & INIT_SOCKET_POOL)
 		DestroySocketPool();
 
-	if (lp->Initialized & INIT_WSADATA)
-		WSACleanup();
-
 	if (lp->Initialized & INIT_LOGGER)
 		LoggerDestroy();
+
+	if (lp->Initialized & INIT_WSADATA)
+		WSACleanup();
 }
 
 int main(int argc, char* argv[])

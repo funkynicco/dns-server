@@ -106,7 +106,7 @@ void SocketPoolDestroySocket(int socketType, SOCKET Socket)
 
 	EnterCriticalSection(&pPool->CritSect);
 	if (pPool->dwAllocatedSockets == 0)
-		Error(__FUNCTION__ " - dwAllocatedSockets is 0 in attempt to destroy %s socket: %u", socketType == SOCKETTYPE_UDP ? "UDP" : "TCP", Socket)
+		Error(__FUNCTION__ " - dwAllocatedSockets is 0 in attempt to destroy %s socket: %Id", socketType == SOCKETTYPE_UDP ? "UDP" : "TCP", Socket)
 	else
 		--pPool->dwAllocatedSockets;
 	LeaveCriticalSection(&pPool->CritSect);
@@ -115,7 +115,7 @@ void SocketPoolDestroySocket(int socketType, SOCKET Socket)
 	closesocket(Socket);
 
 #ifdef __LOG_SOCKET_ALLOCATIONS
-	LoggerWrite(__FUNCTION__ " - Destroyed %s socket %u", socketType == SOCKETTYPE_UDP ? "UDP" : "TCP", Socket);
+	LoggerWrite(__FUNCTION__ " - Destroyed %s socket %Id", socketType == SOCKETTYPE_UDP ? "UDP" : "TCP", Socket);
 #endif // __LOG_SOCKET_ALLOCATIONS
 }
 
@@ -168,7 +168,7 @@ void SocketPoolFill()
 #ifdef __LOG_SOCKET_ALLOCATIONS
 			if (p > str)
 				*p++ = ' ';
-			p += sprintf(p, "%u", Socket);
+			p += sprintf(p, "%Id", Socket);
 #endif // __LOG_SOCKET_ALLOCATIONS
 		}
 

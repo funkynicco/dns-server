@@ -23,9 +23,11 @@
 #include "Logger\Logger.h"
 #include "Containers\ArrayContainer.h"
 #include "Containers\PtrMap.h"
+#include "Containers\CircularBuffer.h"
 #include "Utilities\Utilities.h"
 #include "Utilities\Scanner.h"
 #include "Configuration\Configuration.h"
+#include "Json\Json.h"
 
 #include "Networking\SocketPool.h"
 #include "Web\WebServer.h"

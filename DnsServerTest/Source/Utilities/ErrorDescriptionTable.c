@@ -315,7 +315,7 @@ EDT_ENTRY(586, "ERROR_BACKUP_CONTROLLER", "This operation is only allowed for th
 EDT_ENTRY(587, "ERROR_MUTANT_LIMIT_EXCEEDED", "An attempt was made to acquire a mutant such that its maximum count would have been exceeded.")
 EDT_ENTRY(588, "ERROR_FS_DRIVER_REQUIRED", "A volume has been accessed for which a file system driver is required that has not yet been loaded.")
 EDT_ENTRY(589, "ERROR_CANNOT_LOAD_REGISTRY_FILE", "{Registry File Failure} The registry cannot load the hive (file): %hs or its log or alternate. It is corrupt, absent, or not writable.")
-EDT_ENTRY(591, "ERROR_SYSTEM_PROCESS_TERMINATED", "{Fatal System Error} The %hs system process terminated unexpectedly with a status of 0x%08x (0x%08x 0x%08x). The system has been shut down.")
+EDT_ENTRY(591, "ERROR_SYSTEM_PROCESS_TERMINATED", "{Fatal System Error} The %hs system process terminated unexpectedly with a status of 0x%p (0x%p 0x%p). The system has been shut down.")
 EDT_ENTRY(592, "ERROR_DATA_NOT_ACCEPTED", "{Data Not Accepted} The TDI client could not handle the data received during an indication.")
 EDT_ENTRY(593, "ERROR_VDM_HARD_ERROR", "NTVDM encountered a hard error.")
 EDT_ENTRY(594, "ERROR_DRIVER_CANCEL_TIMEOUT", "{Cancel Timeout} The driver %hs failed to complete a cancelled I/O request in the allotted time.")
@@ -2773,27 +2773,18 @@ void InitializeErrorDescriptionTable()
 		++numberOfErrors;
 	}
 
-	struct e_table** lookup = (struct e_table**)malloc(sizeof(struct e_table*) * dwHighestErrorCode);
-	ZeroMemory(lookup, sizeof(struct e_table*) * dwHighestErrorCode);
+	struct e_table** lookup = (struct e_table**)malloc(sizeof(struct e_table*) * dwHighestErrorCode + 1); // +1 cause it can access last element!
+	ZeroMemory(lookup, sizeof(struct e_table*) * dwHighestErrorCode + 1);
 	for (int i = 0; i < numberOfErrors; ++i)
 	{
 		struct e_table* item = &_table[i];
 
 		lookup[item->dwError] = item;
 	}
+	return;
 
 	_tableLookup = lookup;
 	_dwHighestErrorCode = dwHighestErrorCode;
-/*
-	// exchange
-#ifdef _WIN64 // 64 bit
-	struct e_table** old = (struct e_table**)InterlockedExchange64((volatile LONG64*)&_tableLookup, (LONG64)lookup);
-#else // _WIN64
-	struct e_table** old = (struct e_table**)InterlockedExchange((volatile LONG*)&_tableLookup, (LONG)lookup);
-#endif // _WIN64
-	_dwHighestErrorCode = dwHighestErrorCode;
-	if (old)
-		free(old);*/
 }
 
 BOOL GetErrorDescription(DWORD dwError, LPSTR lpName, LPSTR lpDescription)

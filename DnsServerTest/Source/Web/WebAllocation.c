@@ -23,25 +23,25 @@ LPWEB_SERVER_INFO AllocateWebServerInfo(DWORD dwNumberOfThreads)
 	ASSERT(InitializeCriticalSectionAndSpinCount(&lpServerInfo->csStats, 2000));
 
 	ArrayContainerCreate(&lpServerInfo->PendingWSARecv, 32);
-	LoggerWrite(__FUNCTION__ " - 1: %08x, 2: %08x, 3: %08x, 4: %08x",
+	LoggerWrite(__FUNCTION__ " - 1: %p, 2: %p, 3: %p, 4: %p",
 		(ULONG_PTR)lpServerInfo->PendingWSARecv.pElem,
 		(ULONG_PTR)lpServerInfo->PendingWSASend.pElem,
 		(ULONG_PTR)lpServerInfo->AllocatedClients.pElem,
 		(ULONG_PTR)lpServerInfo->AllocatedBuffers.pElem);
 	ArrayContainerCreate(&lpServerInfo->PendingWSASend, 32);
-	LoggerWrite(__FUNCTION__ " - 1: %08x, 2: %08x, 3: %08x, 4: %08x",
+	LoggerWrite(__FUNCTION__ " - 1: %p, 2: %p, 3: %p, 4: %p",
 		(ULONG_PTR)lpServerInfo->PendingWSARecv.pElem,
 		(ULONG_PTR)lpServerInfo->PendingWSASend.pElem,
 		(ULONG_PTR)lpServerInfo->AllocatedClients.pElem,
 		(ULONG_PTR)lpServerInfo->AllocatedBuffers.pElem);
 	ArrayContainerCreate(&lpServerInfo->AllocatedClients, 16);
-	LoggerWrite(__FUNCTION__ " - 1: %08x, 2: %08x, 3: %08x, 4: %08x",
+	LoggerWrite(__FUNCTION__ " - 1: %p, 2: %p, 3: %p, 4: %p",
 		(ULONG_PTR)lpServerInfo->PendingWSARecv.pElem,
 		(ULONG_PTR)lpServerInfo->PendingWSASend.pElem,
 		(ULONG_PTR)lpServerInfo->AllocatedClients.pElem,
 		(ULONG_PTR)lpServerInfo->AllocatedBuffers.pElem);
 	ArrayContainerCreate(&lpServerInfo->AllocatedBuffers, 64);
-	LoggerWrite(__FUNCTION__ " - 1: %08x, 2: %08x, 3: %08x, 4: %08x",
+	LoggerWrite(__FUNCTION__ " - 1: %p, 2: %p, 3: %p, 4: %p",
 		(ULONG_PTR)lpServerInfo->PendingWSARecv.pElem,
 		(ULONG_PTR)lpServerInfo->PendingWSASend.pElem,
 		(ULONG_PTR)lpServerInfo->AllocatedClients.pElem,
@@ -65,7 +65,7 @@ LPWEB_SERVER_INFO AllocateWebServerInfo(DWORD dwNumberOfThreads)
 	}
 
 #ifdef __LOG_WEB_ALLOCATIONS
-	LoggerWrite(__FUNCTION__ " - Allocated %08x", lpServerInfo);
+	LoggerWrite(__FUNCTION__ " - Allocated %p", lpServerInfo);
 #endif // __LOG_WEB_ALLOCATIONS
 	return lpServerInfo;
 }
@@ -85,7 +85,7 @@ void DestroyWebServerInfo(LPWEB_SERVER_INFO lpServerInfo)
 		if (WaitForSingleObject(lpServerInfo->IOThreads.hThreads[i], 3000) == WAIT_TIMEOUT)
 		{
 			TerminateThread(lpServerInfo->IOThreads.hThreads[i], 0);
-			Error(__FUNCTION__ " - [Warning] Forcefully terminated thread 0x%08x", (DWORD_PTR)lpServerInfo->IOThreads.hThreads[i]);
+			Error(__FUNCTION__ " - [Warning] Forcefully terminated thread 0x%p", lpServerInfo->IOThreads.hThreads[i]);
 		}
 		CloseHandle(lpServerInfo->IOThreads.hThreads[i]);
 	}
@@ -119,7 +119,7 @@ void DestroyWebServerInfo(LPWEB_SERVER_INFO lpServerInfo)
 		CloseHandle(lpServerInfo->IOThreads.hIocp);
 
 #ifdef __LOG_WEB_ALLOCATIONS
-	LoggerWrite(__FUNCTION__ " - Destroyed %08x", lpServerInfo);
+	LoggerWrite(__FUNCTION__ " - Destroyed %p", lpServerInfo);
 #endif // __LOG_WEB_ALLOCATIONS
 	free(lpServerInfo);
 }
@@ -140,7 +140,7 @@ static LPWEB_CLIENT_INFO InternalAllocateWebClientInfo(LPWEB_SERVER_INFO lpServe
 
 	EnterCriticalSection(&lpServerInfo->csStats);
 	if (!ArrayContainerAddElement(&lpServerInfo->AllocatedClients, lpClientInfo, NULL))
-		Error(__FUNCTION__ " - Failed to add lpClientInfo %08x to lpAllocatedClients", (ULONG_PTR)lpClientInfo);
+		Error(__FUNCTION__ " - Failed to add lpClientInfo %p to lpAllocatedClients", lpClientInfo);
 	LeaveCriticalSection(&lpServerInfo->csStats);
 
 	ClearDestroyed(lpClientInfo);
@@ -164,7 +164,7 @@ LPWEB_CLIENT_INFO AllocateWebClientInfo(LPWEB_SERVER_INFO lpServerInfo, SOCKET S
 	LPWEB_CLIENT_INFO lpClientInfo = InternalAllocateWebClientInfo(lpServerInfo, Socket, NULL, &dwAllocations);
 
 #ifdef __LOG_WEB_ALLOCATIONS
-	LoggerWrite(__FUNCTION__ " - Allocated %08x (%u allocations)", lpClientInfo, dwAllocations);
+	LoggerWrite(__FUNCTION__ " - Allocated %p (%u allocations)", lpClientInfo, dwAllocations);
 #endif // __LOG_WEB_ALLOCATIONS
 
 	return lpClientInfo;
@@ -174,7 +174,7 @@ LPWEB_CLIENT_INFO CopyWebClientInfo(LPWEB_CLIENT_INFO lpOriginalClientInfo)
 {
 	if (IsDestroyed(lpOriginalClientInfo))
 	{
-		Error(__FUNCTION__ " - Copying from destroyed object %08x", (ULONG_PTR)lpOriginalClientInfo);
+		Error(__FUNCTION__ " - Copying from destroyed object %p", lpOriginalClientInfo);
 		return NULL;
 	}
 
@@ -186,7 +186,7 @@ LPWEB_CLIENT_INFO CopyWebClientInfo(LPWEB_CLIENT_INFO lpOriginalClientInfo)
 		&dwAllocations);
 
 #ifdef __LOG_WEB_ALLOCATIONS
-	LoggerWrite(__FUNCTION__ " - Allocated %08x [COPY OF %08x] (%u allocations)", lpClientInfo, lpOriginalClientInfo, dwAllocations);
+	LoggerWrite(__FUNCTION__ " - Allocated %p [COPY OF %p] (%u allocations)", lpClientInfo, lpOriginalClientInfo, dwAllocations);
 #endif // __LOG_WEB_ALLOCATIONS
 
 	return lpClientInfo;
@@ -196,7 +196,7 @@ void DestroyWebClientInfo(LPWEB_CLIENT_INFO lpClientInfo)
 {
 	if (IsDestroyed(lpClientInfo))
 	{
-		Error(__FUNCTION__ " - DESTROYING ALREADY DESTROYED OBJECT %08x", (ULONG_PTR)lpClientInfo);
+		Error(__FUNCTION__ " - DESTROYING ALREADY DESTROYED OBJECT %p", lpClientInfo);
 		int* a = 0;
 		*a = 0;
 	}
@@ -207,7 +207,7 @@ void DestroyWebClientInfo(LPWEB_CLIENT_INFO lpClientInfo)
 
 	EnterCriticalSection(&lpServerInfo->csAllocClient);
 #ifdef __LOG_WEB_ALLOCATIONS
-	LoggerWrite(__FUNCTION__ " - Destroyed %08x (%u allocations)", lpClientInfo, lpServerInfo->dwAllocatedClients - 1);
+	LoggerWrite(__FUNCTION__ " - Destroyed %p (%u allocations)", lpClientInfo, lpServerInfo->dwAllocatedClients - 1);
 #endif // __LOG_WEB_ALLOCATIONS
 	if (lpServerInfo->dwAllocatedClients == 0)
 	{
@@ -217,7 +217,7 @@ void DestroyWebClientInfo(LPWEB_CLIENT_INFO lpClientInfo)
 
 	EnterCriticalSection(&lpServerInfo->csStats);
 	if (!ArrayContainerDeleteElementByValue(&lpServerInfo->AllocatedClients, lpClientInfo))
-		Error(__FUNCTION__ " - Failed to remove lpClientInfo %08x from lpAllocatedClients", (ULONG_PTR)lpClientInfo);
+		Error(__FUNCTION__ " - Failed to remove lpClientInfo %p from lpAllocatedClients", lpClientInfo);
 	LeaveCriticalSection(&lpServerInfo->csStats);
 
 	lpClientInfo->next = lpServerInfo->lpFreeClients;
@@ -244,7 +244,7 @@ static LPWEB_CLIENT_BUFFER InternalAllocateWebClientBuffer(LPWEB_CLIENT_INFO lpC
 
 	EnterCriticalSection(&lpServerInfo->csStats);
 	if (!ArrayContainerAddElement(&lpServerInfo->AllocatedBuffers, lpBuffer, NULL))
-		Error(__FUNCTION__ " - Failed to add lpBuffer %08x to lpAllocatedBuffers", (ULONG_PTR)lpBuffer);
+		Error(__FUNCTION__ " - Failed to add lpBuffer %p to lpAllocatedBuffers", lpBuffer);
 	LeaveCriticalSection(&lpServerInfo->csStats);
 
 	ClearDestroyed(lpBuffer);
@@ -266,7 +266,7 @@ LPWEB_CLIENT_BUFFER AllocateWebClientBuffer(LPWEB_CLIENT_INFO lpClientInfo)
 	LPWEB_CLIENT_BUFFER lpBuffer = InternalAllocateWebClientBuffer(lpClientInfo, NULL, &dwAllocations);
 
 #ifdef __LOG_WEB_ALLOCATIONS
-	LoggerWrite(__FUNCTION__ " - Allocated buffer %08x (%u allocations)", lpBuffer, dwAllocations);
+	LoggerWrite(__FUNCTION__ " - Allocated buffer %p (%u allocations)", lpBuffer, dwAllocations);
 #endif // __LOG_WEB_ALLOCATIONS
 
 	return lpBuffer;
@@ -276,7 +276,7 @@ LPWEB_CLIENT_BUFFER CopyWebClientBuffer(LPWEB_CLIENT_BUFFER lpOriginalBuffer)
 {
 	if (IsDestroyed(lpOriginalBuffer))
 	{
-		Error(__FUNCTION__ " - Copying from destroyed buffer object %08x", (ULONG_PTR)lpOriginalBuffer);
+		Error(__FUNCTION__ " - Copying from destroyed buffer object %p", lpOriginalBuffer);
 		return NULL;
 	}
 
@@ -287,7 +287,7 @@ LPWEB_CLIENT_BUFFER CopyWebClientBuffer(LPWEB_CLIENT_BUFFER lpOriginalBuffer)
 		&dwAllocations);
 
 #ifdef __LOG_WEB_ALLOCATIONS
-	LoggerWrite(__FUNCTION__ " - Allocated buffer %08x [COPY OF %08x] (%u allocations)", lpBuffer, lpOriginalBuffer, dwAllocations);
+	LoggerWrite(__FUNCTION__ " - Allocated buffer %p [COPY OF %p] (%u allocations)", lpBuffer, lpOriginalBuffer, dwAllocations);
 #endif // __LOG_WEB_ALLOCATIONS
 
 	return lpBuffer;
@@ -297,7 +297,7 @@ void DestroyWebClientBuffer(LPWEB_CLIENT_BUFFER lpBuffer)
 {
 	if (IsDestroyed(lpBuffer))
 	{
-		Error(__FUNCTION__ " - DESTROYING ALREADY DESTROYED BUFFER OBJECT %08x", (ULONG_PTR)lpBuffer);
+		Error(__FUNCTION__ " - DESTROYING ALREADY DESTROYED BUFFER OBJECT %p", lpBuffer);
 		int* a = 0;
 		*a = 0;
 	}
@@ -308,7 +308,7 @@ void DestroyWebClientBuffer(LPWEB_CLIENT_BUFFER lpBuffer)
 
 	EnterCriticalSection(&lpServerInfo->csAllocBuffer);
 #ifdef __LOG_WEB_ALLOCATIONS
-	LoggerWrite(__FUNCTION__ " - Destroyed buffer %08x (%u allocations)", lpBuffer, lpServerInfo->dwAllocatedBuffers - 1);
+	LoggerWrite(__FUNCTION__ " - Destroyed buffer %p (%u allocations)", lpBuffer, lpServerInfo->dwAllocatedBuffers - 1);
 #endif // __LOG_WEB_ALLOCATIONS
 	if (lpServerInfo->dwAllocatedBuffers == 0)
 	{
@@ -318,7 +318,7 @@ void DestroyWebClientBuffer(LPWEB_CLIENT_BUFFER lpBuffer)
 
 	EnterCriticalSection(&lpServerInfo->csStats);
 	if (!ArrayContainerDeleteElementByValue(&lpServerInfo->AllocatedBuffers, lpBuffer))
-		Error(__FUNCTION__ " - Failed to remove lpBuffer %08x from lpAllocatedBuffers", (ULONG_PTR)lpBuffer);
+		Error(__FUNCTION__ " - Failed to remove lpBuffer %p from lpAllocatedBuffers", lpBuffer);
 	LeaveCriticalSection(&lpServerInfo->csStats);
 
 	lpBuffer->next = lpServerInfo->lpFreeBuffers;
