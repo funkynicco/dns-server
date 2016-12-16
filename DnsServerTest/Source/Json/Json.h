@@ -7,7 +7,8 @@ extern "C" {
 typedef struct _tagJsonData
 {
 	char InternalBuffer[65536];
-	char* lpMem;
+	char* lpMemBegin;
+	char* lpMemEnd;
 	char* lpPtr;
 	DWORD dwSizeOfMemory;
 
@@ -15,6 +16,9 @@ typedef struct _tagJsonData
 
 void JsonCreateInstance(LPJSON_DATA lpJson);
 void JsonDestroyInstance(LPJSON_DATA lpJson);
+void JsonWriteChar(LPJSON_DATA lpJson, char c);
+void JsonWriteString(LPJSON_DATA lpJson, const char* str, BOOL bEscape);
+void JsonWriteNumber(LPJSON_DATA lpJson, LONGLONG number);
 
 #ifdef __cplusplus
 }

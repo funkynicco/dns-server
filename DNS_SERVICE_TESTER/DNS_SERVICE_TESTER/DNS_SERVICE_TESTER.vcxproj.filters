@@ -7,12 +7,27 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Main.c">
+    <ClCompile Include="IocpDnsTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DataLogger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StdAfx.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IocpDnsTest.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CriticalSection.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DataLogger.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

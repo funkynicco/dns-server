@@ -142,9 +142,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Main.c" />
+    <ClCompile Include="DataLogger.cpp" />
+    <ClCompile Include="IocpDnsTest.cpp" />
+    <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CriticalSection.h" />
+    <ClInclude Include="DataLogger.h" />
+    <ClInclude Include="IocpDnsTest.h" />
     <ClInclude Include="StdAfx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

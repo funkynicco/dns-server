@@ -1,0 +1,68 @@
+/* Style */
+
+body {
+	border: 1px solid #7c7c7c;
+	margin: 10px 10px 10px 10px;
+	background: #323232;
+	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-size: 14px;
+    line-height: 1.428571429;
+	color: #dfdfdf;
+}
+
+table {
+	width: 100%;
+	border-spacing: 0;
+}
+
+table thead tr td,
+table tbody tr td,
+table tfoot tr td {
+    padding: 5px 10px 5px 10px;
+	vertical-align: top;
+}
+
+table thead tr td {
+	background: #cddd00;
+	font-weight: bold;
+	color: #000;
+}
+
+table thead tr td:nth-child(1) {
+	width: 140px;
+}
+
+table thead tr td:nth-child(2) {
+	width: 50px;
+}
+
+table thead tr td:nth-child(3) {
+	width: 200px;
+}
+
+table tbody tr td {
+    border-top: 1px solid #7c7c7c;
+}
+
+.thread-badge {
+	padding: 0px 3px 0px 3px;
+	border-radius: 3px;
+	display: inline-block;
+	font-weight: bold;
+}
+
+.address-link {
+	padding: 0px 3px 0px 3px;
+	border-radius: 3px;
+	background: #633660;
+	border: 1px solid #936690;
+	display: inline-block;
+	color: #dfdfdf;
+}
+
+.bar a {
+	display: inline-block;
+	padding: 5px;
+	color: #dfdfdf;
+	font-size: 16px;
+}

@@ -32,6 +32,8 @@ int main(int argc, char* argv[])
 	/*TestHttpParse();
 	return 0;*/
 
+	//LogCache::GetInstance()->AddLogItem(1, __LINE__, __FILE__, 0, 1, time(NULL), "Hello World");
+
 	if (!g_cfg.Load("config.cfg"))
 	{
 		printf(__FUNCTION__ " - Failed to load configuration.\n");

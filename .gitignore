@@ -11,3 +11,7 @@ Release/
 /DnsServerTest/config.cfg
 
 *.aps
+*.opendb
+*.db
+
+Logs/

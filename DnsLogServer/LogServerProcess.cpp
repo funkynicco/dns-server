@@ -59,16 +59,54 @@ DWORD LogServer::LogProcessThread()
 	return 0;
 }
 
+inline WORD GetLogTextAttribute(const char* str)
+{
+	const char* end = str + strlen(str);
+
+	while (str < end)
+	{
+		switch (tolower(*str))
+		{
+		case 'e': // error
+			if (str + 5 < end && _memicmp(str, "error", 5) == 0)
+				return FOREGROUND_RED | FOREGROUND_INTENSITY;
+			break;
+		case 'f': // fail
+			if (str + 4 < end && _memicmp(str, "fail", 4) == 0)
+				return FOREGROUND_RED | FOREGROUND_INTENSITY;
+			break;
+		case 'w': // warning
+			if (str + 7 < end && _memicmp(str, "warning", 7) == 0)
+				return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+			break;
+		case 'a': // allocate
+			if (str + 8 < end && _memicmp(str, "allocate", 8) == 0)
+				return FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+			break;
+		case 'c': // cancel
+			if (str + 6 < end && _memicmp(str, "cancel", 6) == 0)
+				return FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+			break;
+		}
+
+		++str;
+	}
+
+	return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+}
+
 void LogServer::ProcessMessageObject(LPMESSAGE_PROCESSING_OBJECT lpMessageProcessingObject)
 {
 	char timeBuf[64];
 	strftime(timeBuf, sizeof(timeBuf), "%H:%M:%S", localtime(&lpMessageProcessingObject->LogItem.LogMessage.tmTime));
 
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), GetLogTextAttribute(lpMessageProcessingObject->LogItem.LogMessage.Message));
 	printf(
 		"[Log][%I64d] %s\t%s\n",
 		lpMessageProcessingObject->LogItem.LogMessage.Id,
 		timeBuf,
 		lpMessageProcessingObject->LogItem.LogMessage.Message);
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 
 	m_logger.Write(
 		lpMessageProcessingObject->LogItem.LogMessage.tmTime,

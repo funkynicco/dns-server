@@ -2,14 +2,33 @@
 
 #include "Networking\NetworkDefines.h"
 
-typedef struct _tagDnsHeader
+typedef struct _tagDnsHeader // size 14
 {
 	// A 16-bit field identifying a specific DNS transaction.
 	// The transaction ID is created by the message originator and is copied by the responder into its response message.
 	u_short TransactionID;
 
 	// A 16-bit field containing various service flags that are communicated between the DNS client and the DNS server, including:
+	/*union
+	{
+		struct
+		{
+			unsigned char QR : 1;
+			unsigned char OPCODE : 4;
+			unsigned char AA : 1;
+			unsigned char TC : 1;
+			unsigned char RD : 1;
+
+			unsigned char RA : 1;
+			unsigned char res1 : 1;
+			unsigned char res2 : 1;
+			unsigned char res3 : 1;
+			unsigned char RCODE : 4;
+		};*/
+
 	u_short Flags;
+	//} Flags;
+
 
 	// [Question Resource Record count] A 16-bit field representing the number of entries in the question section of the DNS message.
 	u_short NumberOfQuestions;

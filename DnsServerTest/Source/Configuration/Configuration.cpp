@@ -99,6 +99,34 @@ static BOOL ConfigurationInternalLoad(LPSCANNER_CONTEXT lpContext)
 				}
 			}
 		}
+        else if (_strcmpi(lpContext->Token, "SQL") == 0)
+        {
+            ASSERT(ScannerGetToken(lpContext) &&
+                *lpContext->Token == '{');
+
+            while (ScannerGetToken(lpContext) &&
+                *lpContext->Token != '}')
+            {
+                if (_strcmpi(lpContext->Token, "Enabled") == 0)
+                {
+                    ASSERT(ScannerGetToken(lpContext)); // =
+                    ASSERT(ScannerGetToken(lpContext)); // value
+                    g_Configuration.SQL.Enabled = _strcmpi(lpContext->Token, "true") == 0;
+                }
+                else if (_strcmpi(lpContext->Token, "Server") == 0)
+                {
+                    ASSERT(ScannerGetToken(lpContext)); // =
+                    ASSERT(ScannerGetToken(lpContext)); // value
+                    strcpy(g_Configuration.SQL.Server, lpContext->Token);
+                }
+                else if (_strcmpi(lpContext->Token, "DatabaseName") == 0)
+                {
+                    ASSERT(ScannerGetToken(lpContext)); // =
+                    ASSERT(ScannerGetToken(lpContext)); // value
+                    strcpy(g_Configuration.SQL.DatabaseName, lpContext->Token);
+                }
+            }
+        }
 		else
 			DIE("Unknown token at line %d: '%s'", ScannerContextGetLineNumber(lpContext), lpContext->Token);
 	}

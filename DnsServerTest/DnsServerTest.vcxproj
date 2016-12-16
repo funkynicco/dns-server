@@ -152,33 +152,42 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Source\Configuration\Configuration.c" />
-    <ClCompile Include="Source\Logger\Logger.c" />
-    <ClCompile Include="Source\DNS\DnsAllocation.c" />
-    <ClCompile Include="Source\DNS\DnsResolve.c" />
-    <ClCompile Include="Source\DNS\DnsRequestHandler.c" />
-    <ClCompile Include="Source\Main.c" />
-    <ClCompile Include="Source\DNS\DnsRequestTimeoutHandler.c" />
-    <ClCompile Include="Source\DNS\DnsServer.c" />
-    <ClCompile Include="Source\DNS\DnsServerIO.c" />
-    <ClCompile Include="Source\Networking\SocketPool.c" />
-    <ClCompile Include="Source\Utilities\ErrorDescriptionTable.c" />
-    <ClCompile Include="Source\Utilities\Utilities.c" />
-    <ClCompile Include="Source\Utilities\Scanner.c" />
-    <ClCompile Include="Source\Web\WebAllocation.c" />
-    <ClCompile Include="Source\Web\WebServer.c" />
-    <ClCompile Include="Source\Web\WebServerIO.c" />
+    <ClCompile Include="Source\Configuration\Configuration.cpp" />
+    <ClCompile Include="Source\Console\Console.cpp" />
+    <ClCompile Include="Source\DNS\Hosts\DnsHosts.cpp" />
+    <ClCompile Include="Source\Json\Json.cpp" />
+    <ClCompile Include="Source\Logger\Logger.cpp" />
+    <ClCompile Include="Source\DNS\DnsAllocation.cpp" />
+    <ClCompile Include="Source\DNS\DnsResolve.cpp" />
+    <ClCompile Include="Source\DNS\DnsRequestHandler.cpp" />
+    <ClCompile Include="Source\Main.cpp" />
+    <ClCompile Include="Source\DNS\DnsRequestTimeoutHandler.cpp" />
+    <ClCompile Include="Source\DNS\DnsServer.cpp" />
+    <ClCompile Include="Source\DNS\DnsServerIO.cpp" />
+    <ClCompile Include="Source\Networking\SocketPool.cpp" />
+    <ClCompile Include="Source\SQL\SQLClient.cpp" />
+    <ClCompile Include="Source\SQL\SQLDataReader.cpp" />
+    <ClCompile Include="Source\Utilities\ErrorDescriptionTable.cpp" />
+    <ClCompile Include="Source\Utilities\Utilities.cpp" />
+    <ClCompile Include="Source\Utilities\Scanner.cpp" />
+    <ClCompile Include="Source\Web\WebAllocation.cpp" />
+    <ClCompile Include="Source\Web\WebServer.cpp" />
+    <ClCompile Include="Source\Web\WebServerIO.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Console\Console.h" />
     <ClInclude Include="Source\Containers\ArrayContainer.h" />
     <ClInclude Include="Source\Configuration\Configuration.h" />
     <ClInclude Include="Source\Containers\CircularBuffer.h" />
     <ClInclude Include="Source\Definitions.h" />
     <ClInclude Include="Source\DNS\DnsServer.h" />
+    <ClInclude Include="Source\DNS\Hosts\DnsHosts.h" />
+    <ClInclude Include="Source\JSON\Json.h" />
     <ClInclude Include="Source\Logger\Logger.h" />
     <ClInclude Include="Source\Networking\NetworkDefines.h" />
     <ClInclude Include="Source\Networking\SocketPool.h" />
     <ClInclude Include="Source\Containers\PtrMap.h" />
+    <ClInclude Include="Source\SQL\SQLClient.h" />
     <ClInclude Include="Source\StdAfx.h" />
     <ClInclude Include="Source\Utilities\Utilities.h" />
     <ClInclude Include="Source\Utilities\Scanner.h" />

@@ -10,7 +10,16 @@
 
 #include <Windows.h>
 
+#include <string>
+#include <vector>
+using namespace std;
+
 #define SAFE_CLOSE_SOCKET(a) if ((a) != INVALID_SOCKET) { closesocket(a); (a) = INVALID_SOCKET; }
+#define ASSERT(a) if(!(a)) { MessageBoxA(NULL,"Assert failed in function " __FUNCTION__ "\nin " __FILE__ "\nExpression:\n" #a,"Assert failed", MB_OK | MB_ICONWARNING);int*__a=0;*__a=0; }
+#define GetRealMemoryPointer(__obj) ((char*)(__obj) - 1)
+#define IsDestroyed(__obj) (*((char*)(__obj) - 1) != 0)
+#define SetDestroyed(__obj) *((char*)(__obj) - 1) = 1;
+#define ClearDestroyed(__obj) *((char*)(__obj) - 1) = 0;
 
 typedef struct _tagDnsHeader
 {
@@ -34,3 +43,7 @@ typedef struct _tagDnsHeader
 	u_short NumberOfAdditional;
 
 } DNS_HEADER, *LPDNS_HEADER;
+
+#include "CriticalSection.h"
+#include "DataLogger.h"
+#include "IocpDnsTest.h"

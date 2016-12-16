@@ -140,37 +140,3 @@ static void ArrayContainerClear(LPARRAY_CONTAINER lpArray)
 {
 	lpArray->dwElementNum = 0;
 }
-
-static void TestArrayContainer()
-{
-	char buffer[1024];
-	memset(buffer, 0xcd, sizeof(buffer));
-	ARRAY_CONTAINER Array;
-	ArrayContainerCreateFromMemory(&Array, buffer, sizeof(buffer));
-
-	////////////////////////////////////////////////////////////////////
-#define PRINT_ARRAY() \
-	printf("N(%u): ", Array.dwElementNum); \
-	for (DWORD i = 0; i < Array.dwElementNum; ++i) \
-	{ \
-		if (i > 0) \
-			printf(", "); \
- \
-		printf("%p", Array.pElem[i]); \
-	} \
-	printf("\n");
-	////////////////////////////////////////////////////////////////////
-
-	ArrayContainerAddElement(&Array, (LPVOID)1337, NULL);
-	PRINT_ARRAY();
-	ArrayContainerAddElement(&Array, (LPVOID)2661, NULL);
-	PRINT_ARRAY();
-	ArrayContainerAddElement(&Array, (LPVOID)6161, NULL);
-	PRINT_ARRAY();
-	ArrayContainerDeleteElementByValue(&Array, (LPVOID)1337);
-	PRINT_ARRAY();
-	ArrayContainerAddElement(&Array, (LPVOID)616, NULL);
-	PRINT_ARRAY();
-	ArrayContainerDeleteElementByValue(&Array, (LPVOID)2661);
-	PRINT_ARRAY();
-}

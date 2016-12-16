@@ -269,27 +269,18 @@ BOOL LogWebServer::HandleDynamicRequest(LPWEB_CLIENT_INFO lpWebClientInfo)
 
 		JSON_DATA json;
 		JsonCreateInstance(&json);
-
-#if 0
-		LPLARGE_BUFFER lpBuffer = AllocateLargeBuffer();
-		char* pBuf = lpBuffer->Buffer;
-		pBuf += sprintf(pBuf, "{\"log\":[");
-
 		// json array order: id,thread,time,filename,line,msg
+
+		JsonWriteString(&json, "{\"logs\":[", FALSE);
+
 		LogCache::GetInstance()->Lock();
 		map<LONGLONG, LPLOG_ITEM>& logs = LogCache::GetInstance()->GetLogs();
 		int n = 0;
 		for (map<LONGLONG, LPLOG_ITEM>::const_iterator it = logs.cbegin(); it != logs.cend(); ++it)
 		{
-			if (n++ > 0)
-			{
-				*pBuf++ = ',';
-				*pBuf++ = '\r';
-				*pBuf++ = '\n';
-			}
-
-			// TODO: make a json assembling class that takes care of escaping shit ...
-			pBuf += sprintf(
+			if (n++)
+				JsonWriteChar(&json, ',');
+			/*pBuf += sprintf(
 				pBuf,
 				"[%I64d,%u,%I64d,\"%s\",%d,\"%s\"]",
 				it->second->LogMessage.Id,
@@ -297,22 +288,37 @@ BOOL LogWebServer::HandleDynamicRequest(LPWEB_CLIENT_INFO lpWebClientInfo)
 				it->second->LogMessage.tmTime,
 				it->second->Filename,
 				it->second->Line,
-				it->second->LogMessage.Message);
+				it->second->LogMessage.Message);*/
+
+			JsonWriteChar(&json, '[');
+			JsonWriteNumber(&json, it->second->LogMessage.Id);
+			JsonWriteChar(&json, ',');
+			JsonWriteNumber(&json, it->second->LogMessage.dwThread);
+			JsonWriteChar(&json, ',');
+			JsonWriteNumber(&json, it->second->LogMessage.tmTime);
+			JsonWriteString(&json, ",\"", FALSE);
+			JsonWriteString(&json, it->second->Filename, TRUE);
+			JsonWriteString(&json, "\",", FALSE);
+			JsonWriteNumber(&json, it->second->Line);
+			JsonWriteString(&json, ",\"", FALSE);
+			JsonWriteString(&json, it->second->LogMessage.Message, TRUE);
+			JsonWriteString(&json, "\"]", FALSE);
 		}
 		LogCache::GetInstance()->Unlock();
 
-		pBuf += sprintf(pBuf, "]}");
-#endif
+		JsonWriteString(&json, "]}", FALSE);
 
-		char slen[16];
-		sprintf(slen, "%d", int(pBuf - lpBuffer->Buffer));
+		DWORD dwJsonLength = DWORD(json.lpPtr - json.lpMemBegin);
+
+		char slen[32];
+		sprintf(slen, "%u", dwJsonLength);
 
 		unordered_map<string, string> extra_parameters;
 		extra_parameters.insert(pair<string, string>("Content-Type", "application/json"));
 		extra_parameters.insert(pair<string, string>("Content-Length", slen));
 
 		lpWebClientInfo->SendHeader(200, "OK", extra_parameters);
-		lpWebClientInfo->lpClient->Send(lpBuffer->Buffer, int(pBuf - lpBuffer->Buffer));
+		lpWebClientInfo->lpClient->Send(json.lpMemBegin, dwJsonLength);
 
 		//DestroyLargeBuffer(lpBuffer);
 		JsonDestroyInstance(&json);

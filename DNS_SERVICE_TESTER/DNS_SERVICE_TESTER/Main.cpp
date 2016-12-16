@@ -127,10 +127,9 @@ int main(int argc, char* argv[])
 	SOCKADDR_IN ServerAddr;
 	ServerAddr.sin_family = AF_INET;
 	ServerAddr.sin_addr.s_addr = inet_addr("127.0.0.1"); //inet_addr("8.8.8.8");
-	ServerAddr.sin_port = htons(5666);
+	ServerAddr.sin_port = htons(53);
 
-	LARGE_INTEGER liFrequency, liStart, liEnd;
-	QueryPerformanceFrequency(&liFrequency);
+	IocpDnsTest iocp;
 
 	SOCKET Socket = socket(AF_INET, SOCK_DGRAM, 0);
 	if (Socket != INVALID_SOCKET)
@@ -150,11 +149,15 @@ int main(int argc, char* argv[])
 					bShutdown = TRUE;
 					break;
 				case VK_SPACE:
-					QueryPerformanceCounter(&liStart);
-					PostRequest(Socket, &ServerAddr, "google.com");
-					QueryPerformanceCounter(&liEnd);
-					PrintOperationTime((double)(liEnd.QuadPart - liStart.QuadPart) / liFrequency.QuadPart);
-					break;
+				{
+					vector<string> result;
+					double responseTime;
+					printf(__FUNCTION__ " - Result: %s\n", iocp.ResolveDomain("google.com", result, &responseTime) ? "Succeeded" : "Failed");
+					PrintOperationTime(responseTime);
+					for (vector<string>::iterator it = result.begin(); it != result.end(); ++it)
+						printf("==> %s\n", it->c_str());
+				}
+				break;
 				}
 			}
 

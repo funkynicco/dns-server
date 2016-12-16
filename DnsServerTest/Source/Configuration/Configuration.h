@@ -28,6 +28,13 @@ typedef struct _tagConfiguration
 
 	} Web;
 
+    struct
+    {
+        BOOL Enabled;
+        char Server[256];
+        char DatabaseName[256];
+    } SQL;
+
 } CONFIGURATION, *LPCONFIGURATION;
 
 extern CONFIGURATION g_Configuration;
