@@ -34,4 +34,5 @@
 #include "Networking\SocketPool.h"
 #include "Web\WebServer.h"
 #include "DNS\Hosts\DnsHosts.h"
+#include "HitLog\HitLog.h"
 #include "DNS\DnsServer.h"

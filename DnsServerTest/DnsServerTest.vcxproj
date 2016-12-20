@@ -155,6 +155,7 @@
     <ClCompile Include="Source\Configuration\Configuration.cpp" />
     <ClCompile Include="Source\Console\Console.cpp" />
     <ClCompile Include="Source\DNS\Hosts\DnsHosts.cpp" />
+    <ClCompile Include="Source\HitLog\HitLog.cpp" />
     <ClCompile Include="Source\Json\Json.cpp" />
     <ClCompile Include="Source\Logger\Logger.cpp" />
     <ClCompile Include="Source\DNS\DnsAllocation.cpp" />
@@ -182,6 +183,7 @@
     <ClInclude Include="Source\Definitions.h" />
     <ClInclude Include="Source\DNS\DnsServer.h" />
     <ClInclude Include="Source\DNS\Hosts\DnsHosts.h" />
+    <ClInclude Include="Source\HitLog\HitLog.h" />
     <ClInclude Include="Source\JSON\Json.h" />
     <ClInclude Include="Source\Logger\Logger.h" />
     <ClInclude Include="Source\Networking\NetworkDefines.h" />

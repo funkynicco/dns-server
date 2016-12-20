@@ -33,7 +33,8 @@ private:
 
 ////////////////////////////////////////////
 
-DnsHosts::DnsHosts()
+DnsHosts::DnsHosts() :
+    m_tmDateChanged(0)
 {
     InitializeSRWLock(&m_lock);
 }
@@ -44,108 +45,34 @@ DnsHosts::~DnsHosts()
     {
         free(it.second);
     }
-
-    DestroyHandles();
 }
 
 ///////////////////////////////////////////////////////
 
-BOOL DnsHosts::GetSqlStatementError()
-{
-    SQLSMALLINT nLen;
-    if (SQLGetDiagRecA(SQL_HANDLE_STMT, m_hStmt, 1, m_szSqlState, &m_nNativeError, (SQLCHAR*)m_szMessage, ARRAYSIZE(m_szMessage), &nLen) != SQL_SUCCESS)
-        return FALSE;
-
-    m_szMessage[nLen] = 0;
-    return TRUE;
-}
-
-BOOL DnsHosts::GetSqlConnectionError()
-{
-    SQLSMALLINT nLen;
-    if (SQLGetDiagRecA(SQL_HANDLE_DBC, m_hCon, 1, m_szSqlState, &m_nNativeError, (SQLCHAR*)m_szMessage, ARRAYSIZE(m_szMessage), &nLen) != SQL_SUCCESS)
-        return FALSE;
-
-    m_szMessage[nLen] = 0;
-    return TRUE;
-}
-
-void DnsHosts::DestroyHandles()
-{
-    if (m_hStmt)
-    {
-        SQLFreeHandle(SQL_HANDLE_STMT, m_hStmt);
-        m_hStmt = NULL;
-    }
-
-    if (m_hCon)
-    {
-        SQLDisconnect(m_hCon);
-        SQLFreeHandle(SQL_HANDLE_DBC, m_hCon);
-        m_hCon = NULL;
-    }
-
-    if (m_hEnv)
-    {
-        SQLFreeHandle(SQL_HANDLE_ENV, m_hEnv);
-        m_hEnv = NULL;
-    }
-}
-
 BOOL DnsHosts::Load()
 {
+    Error(__FUNCTION__ " - Loading domains from database ...");
+
     if (!g_Configuration.SQL.Enabled)
         return TRUE;
 
-    if (SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &m_hEnv) != SQL_SUCCESS)
-        return FALSE;
-
-    if (SQLSetEnvAttr(m_hEnv, SQL_ATTR_ODBC_VERSION, (SQLPOINTER)SQL_OV_ODBC3, 0) != SQL_SUCCESS)
-    {
-        DestroyHandles();
-        return FALSE;
-    }
-
-    if (SQLAllocHandle(SQL_HANDLE_DBC, m_hEnv, &m_hCon) != SQL_SUCCESS)
-    {
-        DestroyHandles();
-        return FALSE;
-    }
+    SQLClient client;
 
     char connectionString[1024];
-    sprintf_s(
-        connectionString,
-        ARRAYSIZE(connectionString),
-        "Driver={SQL Server};SERVER=%s;Database=%s;Trusted_Connection=True",
-        g_Configuration.SQL.Server,
-        g_Configuration.SQL.DatabaseName);
-    SQLCHAR szRetConnectionString[1024];
-
-    switch (SQLDriverConnectA(m_hCon, NULL, (SQLCHAR*)connectionString, SQL_NTS, szRetConnectionString, 1024, NULL, SQL_DRIVER_NOPROMPT))
+    GetConnectionString(connectionString, ARRAYSIZE(connectionString));
+    if (!client.Open(connectionString))
     {
-    case SQL_INVALID_HANDLE:
-    case SQL_ERROR:
-        GetSqlConnectionError();
-        Error(__FUNCTION__ " - SQL Connect failed: %s - %s", m_szSqlState, m_szMessage);
-        DestroyHandles();
+        const SQLErrorDescription& error = client.GetErrorDescription();
+        Error(__FUNCTION__ " - SQL Connect failed: %s - %s", error.SqlState, error.Message);
         return FALSE;
     }
-
     ///////////////// connected ////////
 
-    if (SQLAllocHandle(SQL_HANDLE_STMT, m_hCon, &m_hStmt) != SQL_SUCCESS)
+    SQLDataReader reader = client.Execute("SELECT [Domain], [IP] FROM [dbo].[Hosts]");
+    if (!reader.Succeeded())
     {
-        DestroyHandles();
-        return FALSE;
-    }
-
-    if (SQLExecDirectA(m_hStmt, (SQLCHAR*)"SELECT [Domain], [IP] FROM [dbo].[Hosts]", SQL_NTS) != SQL_SUCCESS)
-    {
-        GetSqlStatementError();
-
-        Error(__FUNCTION__ " - Query failed: %s - %s", m_szSqlState, m_szMessage);
-
-        DestroyHandles();
+        const SQLErrorDescription& error = reader.GetErrorDescription();
+        Error(__FUNCTION__ " - SQL Query failed: %s - %s", error.SqlState, error.Message);
         return FALSE;
     }
 
@@ -164,33 +91,22 @@ BOOL DnsHosts::Load()
 
     while (1)
     {
-        SQLRETURN ret = SQLFetch(m_hStmt);
+        SQLRETURN ret = reader.Fetch();
         if (ret == SQL_NO_DATA)
             break;
 
         if (ret != SQL_SUCCESS)
         {
-            GetSqlStatementError();
-
-            Error(__FUNCTION__ " - Query fetch failed: %s - %s", m_szSqlState, m_szMessage);
-
-            DestroyHandles();
+            const SQLErrorDescription& error = client.GetErrorDescription();
+            Error(__FUNCTION__ " - SQL Query fetch failed: %s - %s", error.SqlState, error.Message);
             return FALSE;
         }
 
         LPDNS_HOST_INFO lpHost = (LPDNS_HOST_INFO)malloc(sizeof(DNS_HOST_INFO)); // TODO: memory pooling
         ZeroMemory(lpHost, sizeof(DNS_HOST_INFO));
         char szIP[16];
-        if ((ret = SQLGetData(m_hStmt, 1, SQL_C_CHAR, lpHost->Domain, ARRAYSIZE(lpHost->Domain), NULL)) != SQL_SUCCESS ||
-            (ret = SQLGetData(m_hStmt, 2, SQL_C_CHAR, szIP, ARRAYSIZE(szIP), NULL)) != SQL_SUCCESS)
-        {
-            GetSqlStatementError();
-
-            Error(__FUNCTION__ " - [ret: %d] Query fetch failed: %s - %s", ret, m_szSqlState, m_szMessage);
-
-            DestroyHandles();
-            return FALSE;
-        }
+        reader.GetString(1, lpHost->Domain, ARRAYSIZE(lpHost->Domain));
+        reader.GetString(2, szIP, ARRAYSIZE(szIP));
 
         lpHost->dwIP = inet_addr(szIP);
         m_hosts.insert(pair<string, LPDNS_HOST_INFO>(lpHost->Domain, lpHost));
@@ -198,6 +114,76 @@ BOOL DnsHosts::Load()
 
     ////////////////////////////////////
 
-    DestroyHandles();
+    SQLDataReader reader2 = client.Execute("SELECT [DateChanged] FROM [dbo].[ChangeTracking] WHERE [Table] = 'Hosts'");
+    if (!reader2.Succeeded())
+    {
+        const SQLErrorDescription& error = reader2.GetErrorDescription();
+        Error(__FUNCTION__ " - SQL Query 2 failed: %s - %s", error.SqlState, error.Message);
+        return FALSE;
+    }
+
+    if (reader2.Fetch() == SQL_SUCCESS)
+    {
+        m_tmDateChanged = reader2.GetDateTimeTicks(1);
+        //Error(__FUNCTION__ " - Load m_tmDateChanged: %I64d", m_tmDateChanged);
+    }
+
+    Error(__FUNCTION__ " - Load completed.");
+
     return TRUE;
+}
+
+void DnsHosts::PollReload()
+{
+    if (!g_Configuration.SQL.Enabled)
+        return;
+
+    //Error(__FUNCTION__ " - Running reload check on DB ...");
+
+    BOOL bDoLoad = FALSE;
+    {
+        SQLClient client;
+
+        char connectionString[1024];
+        GetConnectionString(connectionString, ARRAYSIZE(connectionString));
+        if (!client.Open(connectionString))
+        {
+            const SQLErrorDescription& error = client.GetErrorDescription();
+            Error(__FUNCTION__ " - SQL Connect failed: %s - %s", error.SqlState, error.Message);
+            return;
+        }
+
+        SQLDataReader reader = client.Execute("SELECT [DateChanged] FROM [dbo].[ChangeTracking] WHERE [Table] = 'Hosts'");
+        if (!reader.Succeeded())
+        {
+            const SQLErrorDescription& error = reader.GetErrorDescription();
+            Error(__FUNCTION__ " - SQL Query 2 failed: %s - %s", error.SqlState, error.Message);
+            return;
+        }
+
+        if (reader.Fetch() == SQL_SUCCESS)
+        {
+            time_t tm = reader.GetDateTimeTicks(1);
+            if (tm != m_tmDateChanged)
+            {
+                //Error(__FUNCTION__ " - tm: %I64d not same as nDateChanged: %I64d", tm, m_tmDateChanged);
+                bDoLoad = TRUE;
+            }
+        }
+    }
+
+    //Error(__FUNCTION__ " - Running check => %s", bDoLoad ? "True" : "False");
+
+    if (bDoLoad)
+        Load();
+}
+
+void DnsHosts::GetConnectionString(char* pbuf, size_t bufSize)
+{
+    sprintf_s(
+        pbuf,
+        bufSize,
+        "Driver={SQL Server};SERVER=%s;Database=%s;Trusted_Connection=True",
+        g_Configuration.SQL.Server,
+        g_Configuration.SQL.DatabaseName);
 }

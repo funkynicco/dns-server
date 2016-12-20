@@ -10,6 +10,32 @@ extern "C" {
 #define Error(_Sz, ...) printf(__FUNCTION__ " - "_Sz, __VA_ARGS__)
 #endif // __DNS_SERVER_TEST
 
+#define DualLinkedListAddHead(_Head, _Tail, _Item) \
+	(_Item)->next = (_Head); \
+	(_Item)->prev = NULL; \
+	if (_Head) \
+		(_Head)->prev = (_Item); \
+	(_Head) = (_Item); \
+	if (!(_Tail)) \
+		(_Tail) = (_Item);
+#define DualLinkedListAddTail(_Head, _Tail, _Item) \
+	(_Item)->next = NULL; \
+	(_Item)->prev = (_Tail); \
+	if (_Tail) \
+		(_Tail)->next = (_Item); \
+	(_Tail) = (_Item); \
+	if (!(_Head)) \
+		(_Head) = (_Item);
+#define DualLinkedListRemove(_Head, _Tail, _Item) \
+	if ((_Item)->prev) \
+		(_Item)->prev->next = (_Item)->next; \
+	if ((_Item)->next) \
+		(_Item)->next->prev = (_Item)->prev; \
+	if ((_Head) == (_Item)) \
+		(_Head) = (_Item)->next; \
+	if ((_Tail) == (_Item)) \
+		(_Tail) = (_Item)->prev;
+
 #define GetRealMemoryPointer(__obj) ((char*)(__obj) - 1)
 #define IsDestroyed(__obj) (*((char*)(__obj) - 1) != 0)
 #define SetDestroyed(__obj) *((char*)(__obj) - 1) = 1;

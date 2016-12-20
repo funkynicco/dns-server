@@ -41,6 +41,9 @@
     <Filter Include="Source\SQL">
       <UniqueIdentifier>{a3728d02-a2d4-492f-9028-a8ec3c0a5d0a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\HitLog">
+      <UniqueIdentifier>{cad40cf8-8592-4e3c-b36a-ee282d76cad4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Logger\Logger.h">
@@ -93,6 +96,9 @@
     </ClInclude>
     <ClInclude Include="Source\SQL\SQLClient.h">
       <Filter>Source\SQL</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\HitLog\HitLog.h">
+      <Filter>Source\HitLog</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -158,6 +164,9 @@
     </ClCompile>
     <ClCompile Include="Source\SQL\SQLDataReader.cpp">
       <Filter>Source\SQL</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\HitLog\HitLog.cpp">
+      <Filter>Source\HitLog</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

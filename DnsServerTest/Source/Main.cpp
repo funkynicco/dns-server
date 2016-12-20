@@ -165,8 +165,12 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    time_t tmNextCheckDb = time(NULL) + 15;
+
     while (1)
     {
+        time_t tmNow = time(NULL);
+
         // create console input etc from other C# project w/e
 
         if (_kbhit() && _getch() == VK_ESCAPE)
@@ -181,6 +185,13 @@ int main(int argc, char* argv[])
 
         // (Maintenance) Fill up the socket pool
         SocketPoolFill();
+
+        if (g_Configuration.SQL.Enabled&&
+            tmNow >= tmNextCheckDb)
+        {
+            g_dnsHosts.PollReload();
+            tmNextCheckDb = time(NULL) + 15;
+        }
 
         Sleep(100);
     }

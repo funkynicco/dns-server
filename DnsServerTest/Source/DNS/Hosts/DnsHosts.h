@@ -21,6 +21,7 @@ public:
     DnsHosts();
     virtual ~DnsHosts();
     BOOL Load();
+    void PollReload();
     
     inline BOOL TryResolve(const char* domain, LPDWORD lpdwIP)
     {
@@ -38,19 +39,11 @@ public:
     }
 
 private:
-    BOOL GetSqlStatementError();
-    BOOL GetSqlConnectionError();
-    void DestroyHandles();
-
+    void GetConnectionString(char* pbuf, size_t bufSize);
     unordered_map<string, LPDNS_HOST_INFO> m_hosts;
-    PVOID m_hEnv;
-    PVOID m_hCon;
-    PVOID m_hStmt;
-
-    SQLCHAR m_szSqlState[6];
-    SQLCHAR m_szMessage[2048];
-    SQLINTEGER m_nNativeError;
     SRWLOCK m_lock;
+
+    time_t m_tmDateChanged;
 };
 
 extern DnsHosts g_dnsHosts;

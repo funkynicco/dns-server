@@ -165,11 +165,16 @@ void DnsRequestHandlerProcessRequest(LPDNS_REQUEST_INFO lpRequestInfo)
     u_short questionClass = *((u_short*)ptr); ptr += 2;
 
     AssembleDomainFromLabels(domainName, aLabels, dwNumLabels);
+    
+    // check if stupid .in-addr.arpa and .ipv6.arpa
+    const char* domainNameEnd = domainName + strlen(domainName);
+    BOOL bIsArpa = domainNameEnd - domainName >= 5 && strcmp(domainNameEnd - 5, ".arpa") == 0;
+    if (!bIsArpa)
+        g_hitLog.AddHit(domainName);
 
     // ptr
 
     DWORD dwIP;
-    //if (_strcmpi(domainName, "nprog.com") == 0)
     if (g_dnsHosts.TryResolve(domainName, &dwIP))
     {
         lpDnsHeader->NumberOfAnswers = 1;
@@ -207,7 +212,11 @@ void DnsRequestHandlerProcessRequest(LPDNS_REQUEST_INFO lpRequestInfo)
     }
 #endif
 
-    Error(__FUNCTION__ " - Resolve domain name: '%s' (unknown)", domainName);
+    if (!bIsArpa)
+    {
+        Error("Dns-Relay %s", domainName);
+    }
+
     FlipDnsHeader(lpDnsHeader, FALSE);
     ResolveDns(lpRequestInfo);
 }

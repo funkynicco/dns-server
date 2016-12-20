@@ -28,6 +28,7 @@ public:
     }
 
     inline BOOL Succeeded() { return m_hStmt != NULL; }
+    inline const SQLErrorDescription& GetErrorDescription() { return m_errorDescription; }
 
     SQLRETURN Fetch();
 
@@ -36,7 +37,7 @@ public:
     short GetInt16(int column);
     int GetInt32(int column);
     __int64 GetInt64(int column);
-    __int64 GetDateTimeTicks(int column);
+    time_t GetDateTimeTicks(int column);
     void GetString(int column, char* buf, int bufSize);
 
 private:
@@ -55,6 +56,8 @@ public:
     void Close();
 
     SQLDataReader Execute(const char* query);
+
+    inline const SQLErrorDescription& GetErrorDescription() { return m_errorDescription; }
 
 private:
     friend class SQLDataReader;

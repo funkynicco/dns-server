@@ -62,11 +62,19 @@ __int64 SQLDataReader::GetInt64(int column)
     return c;
 }
 
-__int64 SQLDataReader::GetDateTimeTicks(int column)
+time_t SQLDataReader::GetDateTimeTicks(int column)
 {
-    __int64 c;
-    SQLGetData(m_hStmt, (SQLUSMALLINT)column, SQL_C_SBIGINT, &c, sizeof(c), NULL);
-    return c;
+    TIMESTAMP_STRUCT ts = {};
+    SQLGetData(m_hStmt, (SQLUSMALLINT)column, SQL_C_TIMESTAMP, &ts, sizeof(ts), NULL);
+
+    struct tm tm = {};
+    tm.tm_year = ts.year - 1900;
+    tm.tm_mon = ts.month - 1;
+    tm.tm_mday = ts.day;
+    tm.tm_hour = ts.hour;
+    tm.tm_min = ts.minute;
+    tm.tm_sec = ts.second;
+    return mktime(&tm);
 }
 
 void SQLDataReader::GetString(int column, char* buf, int bufSize)
