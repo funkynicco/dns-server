@@ -19,10 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\DnsServerTest\Source\Json\Json.c" />
-    <ClCompile Include="..\DnsServerTest\Source\Utilities\ErrorDescriptionTable.c" />
-    <ClCompile Include="..\DnsServerTest\Source\Utilities\Scanner.c" />
-    <ClCompile Include="..\DnsServerTest\Source\Utilities\Utilities.c" />
+    <ClCompile Include="..\DnsServerTest\Source\Json\Json.cpp" />
+    <ClCompile Include="..\DnsServerTest\Source\Utilities\ErrorDescriptionTable.cpp" />
+    <ClCompile Include="..\DnsServerTest\Source\Utilities\Scanner.cpp" />
+    <ClCompile Include="..\DnsServerTest\Source\Utilities\Utilities.cpp" />
     <ClCompile Include="Configuration\Configuration.cpp" />
     <ClCompile Include="Logger\LogCache.cpp" />
     <ClCompile Include="Logger\Logger.cpp" />

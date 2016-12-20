@@ -43,15 +43,6 @@
     <ClCompile Include="LogServerIO.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\DnsServerTest\Source\Utilities\ErrorDescriptionTable.c">
-      <Filter>External\Utilities</Filter>
-    </ClCompile>
-    <ClCompile Include="..\DnsServerTest\Source\Utilities\Scanner.c">
-      <Filter>External\Utilities</Filter>
-    </ClCompile>
-    <ClCompile Include="..\DnsServerTest\Source\Utilities\Utilities.c">
-      <Filter>External\Utilities</Filter>
-    </ClCompile>
     <ClCompile Include="LogServerProcess.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -76,8 +67,17 @@
     <ClCompile Include="Logger\LogCache.cpp">
       <Filter>Source\Logger</Filter>
     </ClCompile>
-    <ClCompile Include="..\DnsServerTest\Source\Json\Json.c">
+    <ClCompile Include="..\DnsServerTest\Source\Json\Json.cpp">
       <Filter>External\Json</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DnsServerTest\Source\Utilities\ErrorDescriptionTable.cpp">
+      <Filter>External\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DnsServerTest\Source\Utilities\Scanner.cpp">
+      <Filter>External\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DnsServerTest\Source\Utilities\Utilities.cpp">
+      <Filter>External\Utilities</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
