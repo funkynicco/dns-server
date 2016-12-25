@@ -82,10 +82,10 @@ void DnsRequestHandlerPostRequest(LPDNS_REQUEST_INFO lpRequestInfo)
 
 void DnsRequestHandlerProcessRequest(LPDNS_REQUEST_INFO lpRequestInfo)
 {
-#ifdef __LOG_DNS_REQUESTS
     char addrtext[16];
     GetIPFromSocketAddress(&lpRequestInfo->SocketAddress, addrtext, sizeof(addrtext));
-    LoggerWrite(__FUNCTION__ " - Request from %s:%d", addrtext, ntohs(lpRequestInfo->SocketAddress.sin_port));
+#ifdef __LOG_DNS_REQUESTS
+    //LoggerWrite(__FUNCTION__ " - Request from %s:%d", addrtext, ntohs(lpRequestInfo->SocketAddress.sin_port));
 #endif // __LOG_DNS_REQUESTS
 
     /*strcpy(lpRequestInfo->Buffer, "hello");
@@ -214,7 +214,7 @@ void DnsRequestHandlerProcessRequest(LPDNS_REQUEST_INFO lpRequestInfo)
 
     if (!bIsArpa)
     {
-        Error("Dns-Relay %s", domainName);
+        Error("%p resolve %s", lpRequestInfo, domainName);
     }
 
     FlipDnsHeader(lpDnsHeader, FALSE);

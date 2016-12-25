@@ -392,7 +392,9 @@ DWORD WINAPI WebServerThread(LPVOID lp)
                 }
                 *tptr = 0;
 
+#ifdef __LOG_WEB_SERVER_IO
                 LoggerWrite(__FUNCTION__ " - [from %s, lpBuffer: %p] Received %u bytes: %s", addrtext, lpBuffer, lpBuffer->dwLength, textbuf);
+#endif // __LOG_WEB_SERVER_IO
 
                 char str[512];
                 int str_len = sprintf(str, "request OK - t: %llu", time(NULL));

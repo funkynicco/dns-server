@@ -129,6 +129,10 @@ static void InternalDnsRequestTimeoutRemoveObject(LPDNS_REQUEST_TIMEOUT_HANDLER 
 		lpObj->prev->next = lpObj->next;
 	if (lpObj == lpHandler->lpAllocatedRequests)
 		lpHandler->lpAllocatedRequests = lpHandler->lpAllocatedRequests->next;
+
+    lpObj->prev = NULL;
+    lpObj->next = lpHandler->lpFreeRequests;
+    lpHandler->lpFreeRequests = lpObj;
 }
 
 void DnsRequestTimeoutRemoveRequest(LPDNS_REQUEST_TIMEOUT_HANDLER lpHandler, LPDNS_REQUEST_INFO lpRequestInfo)
