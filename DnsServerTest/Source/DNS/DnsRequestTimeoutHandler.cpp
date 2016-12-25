@@ -20,7 +20,8 @@ typedef struct _tagDnsRequestTimeoutHandler
 	CRITICAL_SECTION csLock;
 
 	struct LinkedListObject* lpFreeRequests;
-	struct LinkedListObject* lpAllocatedRequests;
+	struct LinkedListObject* lpAllocatedRequestsHead;
+    struct LinkedListObject* lpAllocatedRequestsTail;
 
 } DNS_REQUEST_TIMEOUT_HANDLER, *LPDNS_REQUEST_TIMEOUT_HANDLER;
 
@@ -84,7 +85,7 @@ void DnsRequestTimeoutSetCancelTimeout(LPDNS_REQUEST_TIMEOUT_HANDLER lpHandler, 
 	EnterCriticalSection(&lpHandler->csLock);
 
 	struct LinkedListObject* lpObj;
-	for (lpObj = lpHandler->lpAllocatedRequests; lpObj; lpObj = lpObj->next)
+	for (lpObj = lpHandler->lpAllocatedRequestsHead; lpObj; lpObj = lpObj->next)
 	{
 		if (lpObj->lpRequestInfo == lpRequestInfo)
 		{
@@ -112,23 +113,14 @@ void DnsRequestTimeoutSetCancelTimeout(LPDNS_REQUEST_TIMEOUT_HANDLER lpHandler, 
 	lpObj->tmTimeout = tmTimeout;
 
 	// insert into lpAllocatedRequests
-	lpObj->prev = NULL;
-	lpObj->next = lpHandler->lpAllocatedRequests;
-	if (lpHandler->lpAllocatedRequests)
-		lpHandler->lpAllocatedRequests->prev = lpObj;
-	lpHandler->lpAllocatedRequests = lpObj;
+    DualLinkedListAddTail(lpHandler->lpAllocatedRequestsHead, lpHandler->lpAllocatedRequestsTail, lpObj);
 
 	LeaveCriticalSection(&lpHandler->csLock);
 }
 
 static void InternalDnsRequestTimeoutRemoveObject(LPDNS_REQUEST_TIMEOUT_HANDLER lpHandler, struct LinkedListObject* lpObj)
 {
-	if (lpObj->next)
-		lpObj->next->prev = lpObj->prev;
-	if (lpObj->prev)
-		lpObj->prev->next = lpObj->next;
-	if (lpObj == lpHandler->lpAllocatedRequests)
-		lpHandler->lpAllocatedRequests = lpHandler->lpAllocatedRequests->next;
+    DualLinkedListRemove(lpHandler->lpAllocatedRequestsHead, lpHandler->lpAllocatedRequestsTail, lpObj);
 
     lpObj->prev = NULL;
     lpObj->next = lpHandler->lpFreeRequests;
@@ -140,7 +132,7 @@ void DnsRequestTimeoutRemoveRequest(LPDNS_REQUEST_TIMEOUT_HANDLER lpHandler, LPD
 	EnterCriticalSection(&lpHandler->csLock);
 
 	struct LinkedListObject* lpObj;
-	for (lpObj = lpHandler->lpAllocatedRequests; lpObj; lpObj = lpObj->next)
+	for (lpObj = lpHandler->lpAllocatedRequestsHead; lpObj; lpObj = lpObj->next)
 	{
 		if (lpObj->lpRequestInfo == lpRequestInfo)
 		{
@@ -158,9 +150,11 @@ void DnsRequestTimeoutProcess(LPDNS_REQUEST_TIMEOUT_HANDLER lpHandler)
 
 	time_t tmNow = time(NULL);
 
-	struct LinkedListObject* lpObj = lpHandler->lpAllocatedRequests;
+	struct LinkedListObject* lpObj = lpHandler->lpAllocatedRequestsHead;
 	while (lpObj)
 	{
+        struct LinkedListObject* next = lpObj->next;
+
 		if (tmNow >= lpObj->tmTimeout)
 		{
 			if (!CancelIoEx((HANDLE)lpObj->lpRequestInfo->Socket, &lpObj->lpRequestInfo->Overlapped))
@@ -178,7 +172,7 @@ void DnsRequestTimeoutProcess(LPDNS_REQUEST_TIMEOUT_HANDLER lpHandler)
 			InternalDnsRequestTimeoutRemoveObject(lpHandler, lpObj);
 		}
 
-		lpObj = lpObj->next;
+		lpObj = next;
 	}
 
 	LeaveCriticalSection(&lpHandler->csLock);
