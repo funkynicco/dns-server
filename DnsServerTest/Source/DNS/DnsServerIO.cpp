@@ -263,6 +263,8 @@ DWORD WINAPI DnsServerIOHandler(LPVOID lp)
 			WriteBinaryPacket("IN-REQUEST", lpRequestInfo->Buffer, lpRequestInfo->dwLength);
 #endif // _DEBUG
 
+            QueryPerformanceCounter(&lpRequestInfo->liTimeReceivedRequest);
+
 			DnsRequestHandlerPostRequest(CopyDnsRequestInfo(lpRequestInfo));
 
 			DnsServerPostReceive(lpRequestInfo, IO_RECV);

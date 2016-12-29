@@ -250,6 +250,11 @@ DWORD WINAPI DnsResolveHandler(LPVOID lp)
 
                 g_dnsStatistics.IncrementResolved();
 
+                // add the timing stats thing here
+                LARGE_INTEGER liStop;
+                QueryPerformanceCounter(&liStop);
+                g_dnsStatistics.AddResponseTiming(lpRequestInfo->liTimeReceivedRequest, liStop);
+
 				DnsServerPostSend(lpRequestInfo, IO_SEND); // send back to initial client
 			}
 			else

@@ -61,6 +61,8 @@ typedef struct _tagDnsRequestInfo
 	int IOMode;
 	SOCKET Socket;
 
+    LARGE_INTEGER liTimeReceivedRequest;
+
 	struct _tagDnsRequestInfo* lpInnerRequest;
 
 	struct _tagDnsRequestInfo* next;

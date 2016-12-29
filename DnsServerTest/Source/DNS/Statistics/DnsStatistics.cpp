@@ -16,6 +16,8 @@ DnsStatistics::DnsStatistics() :
     InitializeSRWLock(&m_lock);
     ZeroMemory(&m_stats, sizeof(DNS_STATISTICS));
 
+    QueryPerformanceFrequency(&m_liFrequency);
+
     m_hStopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
     m_hChangedEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
@@ -70,7 +72,7 @@ void DnsStatistics::WriteChangesToSql()
 
     char query[1024];
     sprintf_s(query, 1024,
-        "EXEC [dbo].[UpdateServiceStatus] @status=1, @started='%04d-%02d-%02d %02d:%02d:%02d', @resolved=%I64d, @failed=%I64d, @cached=%I64d, @cacheHits=%I64d",
+        "EXEC [dbo].[UpdateServiceStatus] @status=1, @started='%04d-%02d-%02d %02d:%02d:%02d', @resolved=%I64d, @failed=%I64d, @cached=%I64d, @cacheHits=%I64d, @avgResponse=%I64d",
         stats.Started.wYear,
         stats.Started.wMonth,
         stats.Started.wDay,
@@ -80,14 +82,15 @@ void DnsStatistics::WriteChangesToSql()
         stats.Resolved,
         stats.Failed,
         stats.Cached,
-        stats.CacheHits);
+        stats.CacheHits,
+        stats.AverageRequestTimes);
     client.Execute(query);
 }
 
 DWORD DnsStatistics::WorkerThread()
 {
     HANDLE hEvents[] = { m_hStopEvent, m_hChangedEvent };
-    
+
     while (1)
     {
         DWORD dw = WaitForMultipleObjects(ARRAYSIZE(hEvents), hEvents, FALSE, INFINITE);

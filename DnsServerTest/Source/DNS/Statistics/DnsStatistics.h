@@ -8,6 +8,9 @@ typedef struct _tagDNS_STATISTICS
     LONGLONG Cached;
     LONGLONG CacheHits;
 
+    // Average request time in microseconds
+    LONGLONG AverageRequestTimes;
+
 } DNS_STATISTICS, *LPDNS_STATISTICS;
 
 class DnsStatistics
@@ -69,6 +72,21 @@ public:
         EndUpdate();
     }
 
+    inline void AddResponseTiming(LARGE_INTEGER liStart, LARGE_INTEGER liEnd)
+    {
+        LONGLONG lAdd = LONGLONG((double(liEnd.QuadPart - liStart.QuadPart) / m_liFrequency.QuadPart) * 1000000LL);
+        /*Error(
+            __FUNCTION__ " - liStart:%I64d, liEnd: %I64d, liFrequency: %I64d => lAdd: %I64d",
+            liStart.QuadPart,
+            liEnd.QuadPart,
+            m_liFrequency.QuadPart,
+            lAdd);*/
+
+        BeginUpdate();
+        m_stats.AverageRequestTimes = (m_stats.AverageRequestTimes + lAdd) / 2;
+        EndUpdate();
+    }
+
 private:
     friend DWORD WINAPI DnsStatisticsThread(LPVOID);
     DWORD WorkerThread();
@@ -80,6 +98,8 @@ private:
     HANDLE m_hChangedEvent;
 
     DNS_STATISTICS m_stats;
+
+    LARGE_INTEGER m_liFrequency;
 };
 
 extern DnsStatistics g_dnsStatistics;
