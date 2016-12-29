@@ -44,6 +44,9 @@
     <Filter Include="Source\HitLog">
       <UniqueIdentifier>{cad40cf8-8592-4e3c-b36a-ee282d76cad4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\DNS\Statistics">
+      <UniqueIdentifier>{6b3e6fbe-eb9a-4287-885d-c3e0002b5200}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Logger\Logger.h">
@@ -99,6 +102,9 @@
     </ClInclude>
     <ClInclude Include="Source\HitLog\HitLog.h">
       <Filter>Source\HitLog</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DNS\Statistics\DnsStatistics.h">
+      <Filter>Source\DNS\Statistics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -167,6 +173,9 @@
     </ClCompile>
     <ClCompile Include="Source\HitLog\HitLog.cpp">
       <Filter>Source\HitLog</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DNS\Statistics\DnsStatistics.cpp">
+      <Filter>Source\DNS\Statistics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

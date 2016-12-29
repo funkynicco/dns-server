@@ -248,6 +248,8 @@ DWORD WINAPI DnsResolveHandler(LPVOID lp)
 				DestroyDnsRequestInfo(lpRequestInfo->lpInnerRequest);
 				lpRequestInfo->lpInnerRequest = NULL;
 
+                g_dnsStatistics.IncrementResolved();
+
 				DnsServerPostSend(lpRequestInfo, IO_SEND); // send back to initial client
 			}
 			else

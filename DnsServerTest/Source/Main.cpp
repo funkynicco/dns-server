@@ -165,6 +165,8 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    g_dnsStatistics.Startup();
+
     time_t tmNextCheckDb = time(NULL) + 15;
 
     while (1)

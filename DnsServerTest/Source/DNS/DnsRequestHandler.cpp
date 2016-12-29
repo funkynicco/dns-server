@@ -207,6 +207,11 @@ void DnsRequestHandlerProcessRequest(LPDNS_REQUEST_INFO lpRequestInfo)
             BYTE((dwIP >> 16) & 0xff),
             BYTE((dwIP >> 24) & 0xff));
 
+        LPDNS_STATISTICS lpUpdateStats = g_dnsStatistics.BeginUpdate();
+        ++lpUpdateStats->Resolved;
+        ++lpUpdateStats->CacheHits;
+        g_dnsStatistics.EndUpdate();
+
         DnsServerPostSend(lpRequestInfo, IO_SEND);
         return;
     }

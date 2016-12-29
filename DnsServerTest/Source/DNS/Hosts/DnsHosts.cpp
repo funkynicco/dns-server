@@ -68,7 +68,7 @@ BOOL DnsHosts::Load()
     }
     ///////////////// connected ////////
 
-    SQLDataReader reader = client.Execute("SELECT [Domain], [IP] FROM [dbo].[Hosts]");
+    SQLDataReader reader = client.Execute("EXEC [dbo].[ServiceGetDomains]");
     if (!reader.Succeeded())
     {
         const SQLErrorDescription& error = reader.GetErrorDescription();

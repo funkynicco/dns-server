@@ -165,8 +165,11 @@ void DnsRequestTimeoutProcess(LPDNS_REQUEST_TIMEOUT_HANDLER lpHandler)
 					GetLastError(),
 					GetErrorMessage(GetLastError()));
 			}
-			else
-				Error(__FUNCTION__ " - %p timed out", lpObj->lpRequestInfo);
+            else
+            {
+                Error(__FUNCTION__ " - %p timed out", lpObj->lpRequestInfo);
+                g_dnsStatistics.IncrementFailed();
+            }
 
 			// remove
 			InternalDnsRequestTimeoutRemoveObject(lpHandler, lpObj);
