@@ -1,5 +1,7 @@
 #include "StdAfx.h"
 
+#include "Bootstrapper\Bootstrapper.h"
+
 #ifdef __LOG_DNS_SERVER_IO
 void CheckOutstandingIO(LPDNS_SERVER_INFO lpServerInfo)
 {
@@ -25,6 +27,9 @@ void CheckOutstandingIO(LPDNS_SERVER_INFO lpServerInfo)
 }
 #endif // __LOG_DNS_SERVER_IO
 
+BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
+BOOL g_bQueryShutdown = FALSE;
+
 enum
 {
     INIT_NONE = 0,
@@ -41,11 +46,12 @@ struct ServerParameters
     WSADATA WSAData;
     LPDNS_SERVER_INFO lpDnsServerInfo;
     LPWEB_SERVER_INFO lpWebServerInfo;
+    Bootstrapper* pBootstrapper;
 };
 
 #define SetInit(_InitBit) lp->Initialized |= _InitBit
 
-BOOL Initialize(struct ServerParameters* lp)
+BOOL Initialize(struct ServerParameters* lp, BOOL bService)
 {
     if (lp->Initialized != INIT_NONE)
     {
@@ -74,6 +80,14 @@ BOOL Initialize(struct ServerParameters* lp)
     {
         Error("/// (Failure) No service configured to run in config.cfg ///");
         return FALSE;
+    }
+
+    // initialize bootstrapper
+    if (bService)
+    {
+        lp->pBootstrapper = new Bootstrapper;
+        if (!lp->pBootstrapper->Connect())
+            return FALSE;
     }
 
     InitializeSocketPool();
@@ -130,6 +144,7 @@ BOOL Initialize(struct ServerParameters* lp)
 
 void Uninitalize(struct ServerParameters* lp)
 {
+
     if (lp->lpDnsServerInfo)
         DestroyDnsServerInfo(lp->lpDnsServerInfo);
 
@@ -138,6 +153,9 @@ void Uninitalize(struct ServerParameters* lp)
 
     if (lp->Initialized & INIT_SOCKET_POOL)
         DestroySocketPool();
+
+    if (lp->pBootstrapper)
+        delete lp->pBootstrapper;
 
     if (lp->Initialized & INIT_LOGGER)
     {
@@ -153,13 +171,35 @@ int main(int argc, char* argv[])
 {
     SetConsoleTitle(L"DNS Server Test");
     InitializeErrorDescriptionTable();
+    SetConsoleCtrlHandler(HandlerRoutine, TRUE);
+
+    BOOL bService = FALSE;
+    BOOL bBootstrapTest = FALSE;
+
+    for (int i = 0; i < argc; ++i)
+    {
+        if (_strcmpi(argv[i], "--service") == 0)
+        {
+            bService = TRUE;
+        }
+        else if (_strcmpi(argv[i], "--bootstrap-test") == 0)
+        {
+            bBootstrapTest = TRUE;
+        }
+    }
+
+    if (bBootstrapTest)
+    {
+        int RunBootstrapTest();
+        return RunBootstrapTest();
+    }
 
     DeleteFile(L"dns_packet.txt");
 
     struct ServerParameters serverParameters;
     ZeroMemory(&serverParameters, sizeof(struct ServerParameters));
 
-    if (!Initialize(&serverParameters))
+    if (!Initialize(&serverParameters, bService))
     {
         Uninitalize(&serverParameters);
         return 1;
@@ -169,14 +209,9 @@ int main(int argc, char* argv[])
 
     time_t tmNextCheckDb = time(NULL) + 15;
 
-    while (1)
+    while (!g_bQueryShutdown)
     {
         time_t tmNow = time(NULL);
-
-        // create console input etc from other C# project w/e
-
-        if (_kbhit() && _getch() == VK_ESCAPE)
-            break;
 
 #ifdef __LOG_DNS_SERVER_IO
         CheckOutstandingIO(serverParameters.lpDnsServerInfo);
@@ -188,18 +223,38 @@ int main(int argc, char* argv[])
         // (Maintenance) Fill up the socket pool
         SocketPoolFill();
 
-        if (g_Configuration.SQL.Enabled&&
+        if (g_Configuration.SQL.Enabled &&
             tmNow >= tmNextCheckDb)
         {
             g_dnsHosts.PollReload();
             tmNextCheckDb = time(NULL) + 15;
         }
 
-        Sleep(100);
+        if (serverParameters.pBootstrapper)
+        {
+            if (serverParameters.pBootstrapper->WaitForExit(100))
+                break;
+        }
+        else
+            Sleep(100);
     }
 
     Error("/// STOPPING SERVER ///");
 
     Uninitalize(&serverParameters);
     return 0;
+}
+
+static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
+{
+    switch (dwCtrlType)
+    {
+    case CTRL_C_EVENT:
+    case CTRL_CLOSE_EVENT:
+    case CTRL_SHUTDOWN_EVENT:
+        g_bQueryShutdown = TRUE;
+        return TRUE;
+    }
+
+    return FALSE;
 }

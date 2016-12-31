@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="Source\Service.cpp" />
+    <ClCompile Include="Source\Configuration\Configuration.cpp">
+      <Filter>Configuration</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Logger\Logger.cpp">
+      <Filter>Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Util.cpp" />
+    <ClCompile Include="Source\Bootstrapper\Bootstrapper.cpp">
+      <Filter>Bootstrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SecurityAttributes\SecurityAttributes.cpp">
+      <Filter>SecurityAttributes</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Source\StdAfx.h" />
+    <ClInclude Include="Source\Configuration\Configuration.h">
+      <Filter>Configuration</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Logger\Logger.h">
+      <Filter>Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Bootstrapper\Bootstrapper.h">
+      <Filter>Bootstrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\SecurityAttributes\SecurityAttributes.h">
+      <Filter>SecurityAttributes</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Configuration">
+      <UniqueIdentifier>{d49e4781-082c-461b-b60a-cbb5caa720bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Logger">
+      <UniqueIdentifier>{2ff651b2-0bca-40d9-88cc-a77a87f751a3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Bootstrapper">
+      <UniqueIdentifier>{d9e60ed4-e9ca-4e44-9bfc-316020bef028}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SecurityAttributes">
+      <UniqueIdentifier>{ffbca944-ec81-41f8-9e65-2548618f27dc}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

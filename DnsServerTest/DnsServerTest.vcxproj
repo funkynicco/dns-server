@@ -152,6 +152,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Source\BootstrapperTest.cpp" />
+    <ClCompile Include="Source\Bootstrapper\Bootstrapper.cpp" />
     <ClCompile Include="Source\Configuration\Configuration.cpp" />
     <ClCompile Include="Source\Console\Console.cpp" />
     <ClCompile Include="Source\DNS\Hosts\DnsHosts.cpp" />
@@ -177,6 +179,7 @@
     <ClCompile Include="Source\Web\WebServerIO.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Bootstrapper\Bootstrapper.h" />
     <ClInclude Include="Source\Console\Console.h" />
     <ClInclude Include="Source\Containers\ArrayContainer.h" />
     <ClInclude Include="Source\Configuration\Configuration.h" />

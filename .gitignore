@@ -1,6 +1,8 @@
 Debug/
 Release/
 
+.vs/
+
 *.opensdf
 *.sdf
 *.user
@@ -15,3 +17,9 @@ Release/
 *.db
 
 Logs/
+
+Console_Debug/
+Console_Release/
+Service_Debug/
+Service_Release/
+/DnsLogServer/config.cfg

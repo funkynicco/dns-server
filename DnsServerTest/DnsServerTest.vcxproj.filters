@@ -47,6 +47,9 @@
     <Filter Include="Source\DNS\Statistics">
       <UniqueIdentifier>{6b3e6fbe-eb9a-4287-885d-c3e0002b5200}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Bootstrapper">
+      <UniqueIdentifier>{440b1373-5002-4a38-a47d-d749453b67db}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Logger\Logger.h">
@@ -105,6 +108,9 @@
     </ClInclude>
     <ClInclude Include="Source\DNS\Statistics\DnsStatistics.h">
       <Filter>Source\DNS\Statistics</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Bootstrapper\Bootstrapper.h">
+      <Filter>Source\Bootstrapper</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -176,6 +182,12 @@
     </ClCompile>
     <ClCompile Include="Source\DNS\Statistics\DnsStatistics.cpp">
       <Filter>Source\DNS\Statistics</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\BootstrapperTest.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Bootstrapper\Bootstrapper.cpp">
+      <Filter>Source\Bootstrapper</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
