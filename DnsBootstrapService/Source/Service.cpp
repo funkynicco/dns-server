@@ -1,123 +1,115 @@
 #include "StdAfx.h"
 
-#ifdef _CONSOLE
-void InitializeConsole();
-#endif // _CONSOLE
+#ifdef _SERVICE
 
-BOOL g_bShutdown = FALSE;
+void WINAPI ServiceCtrlHandler(DWORD dwCtrlCode);
+DWORD WINAPI ServiceWorkerThread(LPVOID lpParam);
 
-#ifdef _CONSOLE
-int wmain(char**, int) // not using these, see the GetCommandLineW below instead
-#else // _CONSOLE
-int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
-#endif // _CONSOLE
+int AppStartup(LPWSTR* argv, int argc, Configuration& config); // Main.cpp
+
+/////////////////////////////////////////////////
+
+static SERVICE_STATUS_HANDLE g_hServiceStatus = NULL;
+static HANDLE g_hServiceStopEvent = NULL;
+
+inline void ReportStatus(DWORD dwCurrentState, DWORD dwWin32ExitCode, DWORD dwWaitHint)
 {
-#if 0
-    SecurityAttributes sa;
-    LPSECURITY_ATTRIBUTES lpSecurityAttributes = sa
-        .AddCurrentUser(GENERIC_ALL)
-        //.GrantUser(L"Nicco", GENERIC_ALL)
-        .GrantUser(L"dns.service", GENERIC_READ)
-        .Build();
+    static DWORD dwCheckPoint = 1;
 
-    // play with creating a file, then we can see the permissions of it...
-    HANDLE hTestFile = CreateFile(L"testfile2.txt", GENERIC_READ, FILE_SHARE_READ, lpSecurityAttributes, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (hTestFile == INVALID_HANDLE_VALUE)
-    {
-        WCHAR msg[1024];
-        swprintf(msg, 1024, L"createfile code: %u", GetLastError());
-        MessageBox(NULL, msg, L"create file", MB_OK | MB_ICONERROR);
-    }
+    SERVICE_STATUS status = {};
+    status.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
+    status.dwCurrentState = dwCurrentState;
+    status.dwWin32ExitCode = dwWin32ExitCode;
+    status.dwWaitHint = dwWaitHint;
+
+    if (dwCurrentState == SERVICE_START_PENDING)
+        status.dwControlsAccepted = 0;
     else
-        CloseHandle(hTestFile);
-    return 0;
-#endif // 0
+        status.dwControlsAccepted = SERVICE_ACCEPT_STOP;
 
-    int argc;
-    LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+    if (dwCurrentState == SERVICE_RUNNING ||
+        dwCurrentState == SERVICE_STOPPED)
+        status.dwCheckPoint = 0;
+    else
+        status.dwCheckPoint = dwCheckPoint++;
 
-    WCHAR directory[MAX_PATH];
-    wcscpy_s(directory, argv[0]);
-    PathRemoveFileSpec(directory);
-
-    for (int i = 1; i < argc; ++i)
+    if (!SetServiceStatus(g_hServiceStatus, &status))
     {
-        LPWSTR arg = argv[i];
-        if (_wcsicmp(arg, L"--directory") == 0)
-        {
-            if (i + 1 >= argc)
-            {
-                OutputDebugString(L"Error: --directory not found");
-                return 1;
-            }
+        WCHAR buf[1024];
+        swprintf(buf, 1024, L"SetServiceStatus failed with code: %u", GetLastError());
+        WriteToErrorFile(buf);
+    }
+}
 
-            wcscpy_s(directory, argv[++i]);
-        }
-        else if (_wcsicmp(arg, L"--test-pipe") == 0)
-        {
-            HANDLE hPipe = CreateFile(L"\\\\.\\pipe\\dnsbootstrapper", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-            if (hPipe == INVALID_HANDLE_VALUE)
-            {
-                WCHAR msg[1024];
-                swprintf(msg, 1024, L"Pipe test failed with code: %u", GetLastError());
-                MessageBox(NULL, msg, L"Test pipe", MB_OK | MB_ICONWARNING);
-            }
-            else
-            {
-                CloseHandle(hPipe);
-                MessageBox(NULL, L"Pipe test succeeded!", L"Test pipe", MB_OK | MB_ICONINFORMATION);
-            }
+void WINAPI ServiceMain(DWORD argc, LPTSTR* argv)
+{
+    WriteToErrorFile(__FUNCTION__ L" called");
 
-            return 0;
-        }
+    g_hServiceStatus = RegisterServiceCtrlHandler(SERVICE_NAME, ServiceCtrlHandler);
+    if (!g_hServiceStatus)
+    {
+        WCHAR buf[1024];
+        swprintf(buf, 1024, L"RegisterServiceCtrlHandler failed with code: %u", GetLastError());
+        WriteToErrorFile(buf);
+        return;
     }
 
-    if (lstrlenW(directory) > 0 &&
-        !SetCurrentDirectory(directory))
-        return 1;
+    WriteToErrorFile(L"RegisterServiceCtrlHandler OK");
 
-#ifdef _CONSOLE
-    InitializeConsole();
-#endif // _CONSOLE
+    ReportStatus(SERVICE_START_PENDING, 0, 3000);
 
-    if (!g_logger.Initialize())
-        return 1;
-
-    WCHAR username[128];
-    DWORD dw = ARRAYSIZE(username);
-    GetUserNameW(username, &dw);
-    Error(L"[%s] Starting bootstrap service ...", username);
+    g_hServiceStopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+    if (!g_hServiceStopEvent)
+    {
+        WriteToErrorFile(__FUNCTION__ L" - Failed to create event");
+        ReportStatus(SERVICE_STOPPED, GetLastError(), 0);
+        return;
+    }
 
     Configuration config;
-    if (!config.Load(L"config.json"))
-        return 1;
+    int ret = AppStartup(argv, (int)argc, config);
 
-    Bootstrapper bootstrapper(config);
+    WCHAR buf[1024];
+    swprintf(buf, 1024, L"AppStartup ret: %d", ret);
+    WriteToErrorFile(buf);
 
-    while (!g_bShutdown)
-        Sleep(100);
-
-    return 0;
-}
-
-#ifdef _CONSOLE
-static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
-{
-    switch (dwCtrlType)
+    if (ret == 0)
     {
-    case CTRL_C_EVENT:
-    case CTRL_CLOSE_EVENT:
-    case CTRL_SHUTDOWN_EVENT:
-        g_bShutdown = TRUE;
-        return TRUE;
-    }
+        // startup ok
+        Bootstrapper bootstrapper(config);
 
-    return FALSE;
+        ReportStatus(SERVICE_RUNNING, 0, 0);
+
+        HANDLE hEvents[] = { g_hServiceStopEvent, bootstrapper.GetThread() };
+        DWORD dw = WaitForMultipleObjects(ARRAYSIZE(hEvents), hEvents, FALSE, INFINITE);
+
+        swprintf(buf, 1024, L"WaitForMultipleObjects result: %u", dw);
+        WriteToErrorFile(buf);
+
+        if (dw == 1)
+        {
+            // the bootstrapper thread unexpectedly exited
+            if (!GetExitCodeThread(hEvents[1], &dw))
+                dw = 1;
+            ret = (int)dw;
+        }
+
+        ReportStatus(SERVICE_STOP_PENDING, 0, 0);
+    } // <--- bootstrapper will try to close the sub process in the destructor which is called at end of scope here
+
+    ReportStatus(SERVICE_STOPPED, (DWORD)ret, 0);
+    CloseHandle(g_hServiceStopEvent);
+    g_hServiceStopEvent = NULL;
 }
 
-static void InitializeConsole()
+void WINAPI ServiceCtrlHandler(DWORD dwCtrlCode)
 {
-    SetConsoleCtrlHandler(HandlerRoutine, TRUE);
-    SetConsoleTitle(L"DNS Bootstrapper Service");
+    switch (dwCtrlCode)
+    {
+    case SERVICE_CONTROL_STOP:
+        SetEvent(g_hServiceStopEvent);
+        break;
+    }
 }
+
 #endif // _CONSOLE

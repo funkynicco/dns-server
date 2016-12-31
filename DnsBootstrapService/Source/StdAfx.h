@@ -11,6 +11,8 @@ using namespace std;
 
 #include <time.h>
 
+#define SERVICE_NAME L"DNS Server Bootstrap Service"
+
 #include "Logger\Logger.h"
 #include "Configuration\Configuration.h"
 #include "SecurityAttributes\SecurityAttributes.h"
@@ -20,3 +22,5 @@ wstring AnsiToUnicodeString(const string& str);
 void Split(const wstring& str, vector<wstring>& result, wchar_t ch);
 wstring ParseStringControlCharacters(const wstring& str);
 BOOL StringToInt(LPCWSTR str, int* pnResult);
+
+void WriteToErrorFile(LPCWSTR pszText);

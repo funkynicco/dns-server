@@ -6,7 +6,7 @@ public:
     Bootstrapper(Configuration& config);
     ~Bootstrapper();
 
-
+    inline HANDLE GetThread() { return m_hThread; }
 
 private:
     friend DWORD WINAPI BootstrapperThread(LPVOID);

@@ -68,7 +68,7 @@ void Logger::InternalWrite(LPCWSTR text)
     WriteFileEx(m_hFile, L"\r\n", 2);
     FlushFileBuffers(m_hFile);
 
-#ifdef _CONSOLE
+#ifndef _SERVICE
     wprintf(L"%s%s\n", time, text);
 #endif // _CONSOLE
 
