@@ -259,8 +259,14 @@ BOOL Bootstrapper::StartProcess(LPPROCESS_INFORMATION lpProcessInformation)
     WCHAR workingDirectory[MAX_PATH] = {};
     m_config.GetValue(L"DnsServer:WorkingDirectory", workingDirectory, ARRAYSIZE(workingDirectory));
 
-    WCHAR arguments[MAX_PATH] = {};
-    m_config.GetValue(L"DnsServer:Arguments", arguments, ARRAYSIZE(arguments));
+    WCHAR arguments[1024] = {};
+    LPWSTR pArgs = arguments;
+    *pArgs++ = L'"';
+    wcscpy(pArgs, executable);
+    pArgs += lstrlenW(pArgs);
+    *pArgs++ = L'"';
+    *pArgs++ = L' ';
+    m_config.GetValue(L"DnsServer:Arguments", pArgs, arguments + ARRAYSIZE(arguments) - pArgs);
 
     BOOL createNoWindow = TRUE;
     m_config.GetValueAsBool(L"DnsServer:CreateNoWindow", &createNoWindow);

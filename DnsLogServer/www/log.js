@@ -30,6 +30,19 @@ function Table() {
 	}
 }
 
+function padLeft(str, num, ch) {
+	while (str.length < num) {
+		str = ch + str;
+	}
+	return str;
+}
+
+function getSimplifiedTime(date) {
+	return padLeft(date.getHours().toString(), 2, '0') + ':' +
+		padLeft(date.getMinutes().toString(), 2, '0') + ':' +
+		padLeft(date.getSeconds().toString(), 2, '0');
+}
+
 $(function() {
 	$('.table-container table tbody').html('Loading ...');
 	
@@ -41,7 +54,9 @@ $(function() {
 			for (var i = 0; i < result.logs.length; ++i) {
 				var row = new TableRow();
 				
-				row.addColumn(result.logs[i][2]); // tmTime
+				var date = new Date(result.logs[i][2] * 1000);
+				
+				row.addColumn(getSimplifiedTime(date)); // tmTime
 				row.addColumn(result.logs[i][1]); // dwThread
 				row.addColumn(result.logs[i][3] + ':' + result.logs[i][4]); // filepath:line
 				row.addColumn(result.logs[i][5]); // message

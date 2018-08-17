@@ -488,7 +488,7 @@ DWORD WINAPI WebServerThread(LPVOID lp)
             {
                 DWORD dwError = GetLastError();
 
-                Error(__FUNCTION__ " - Failed to associate socket %Id with I/O completion port: %s",
+                Error(__FUNCTION__ " - Failed to associate socket %u with I/O completion port: %s",
                     lpServerInfo->AcceptContext.Socket,
                     GetErrorMessage(dwError));
 

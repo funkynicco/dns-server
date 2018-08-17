@@ -95,8 +95,16 @@ void LogWebServer::HandleRequest(LPWEB_CLIENT_INFO lpWebClientInfo)
 		return;
 
 	// static files
-	const char* RootDirectory = "d:\\coding\\cpp\\vs2015\\test\\dnsservertest\\dnslogserver\\www"; // must be lowercase
-	size_t RootDirectoryLength = strlen(RootDirectory);
+	char szRootDirectory[MAX_PATH];
+#if _DEBUG
+	strcpy_s(szRootDirectory, "d:\\coding\\cpp\\vs2015\\test\\dnsservertest\\dnslogserver\\www");
+#else
+	char szCurrentDirectory[MAX_PATH];
+	GetCurrentDirectoryA(ARRAYSIZE(szCurrentDirectory), szCurrentDirectory);
+	PathCombineA(szRootDirectory, szCurrentDirectory, "www");
+#endif
+	_strlwr(szRootDirectory); // must be lowercase
+	size_t RootDirectoryLength = strlen(szRootDirectory);
 
 	// normalize the path (move this to a utilitiy function...)
 	char szPath[256];
@@ -129,13 +137,13 @@ void LogWebServer::HandleRequest(LPWEB_CLIENT_INFO lpWebClientInfo)
 	*p1 = 0;
 
 	char filepath[MAX_PATH];
-	PathCombineA(filepath, RootDirectory, szPath);
+	PathCombineA(filepath, szRootDirectory, szPath);
 	printf(__FUNCTION__ " - Request physical file: '%s'\n", filepath);
 
 	// check if it's valid
 	size_t filepath_len = strlen(filepath);
 	if (filepath_len < RootDirectoryLength ||
-		memcmp(filepath, RootDirectory, RootDirectoryLength) != 0)
+		memcmp(filepath, szRootDirectory, RootDirectoryLength) != 0)
 	{
 		printf(__FUNCTION__ " - Invalid request!\n");
 		lpWebClientInfo->SendNotFoundPage();
