@@ -49,6 +49,18 @@ DnsHosts::~DnsHosts()
 
 ///////////////////////////////////////////////////////
 
+inline BOOL IsWildcardDomain(const char* domain)
+{
+    for (; *domain; ++domain)
+    {
+        if (*domain == '*' ||
+            *domain == '?')
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
 BOOL DnsHosts::Load()
 {
     Error(__FUNCTION__ " - Loading domains from database ...");
@@ -87,6 +99,8 @@ BOOL DnsHosts::Load()
 
     m_hosts.clear();
 
+    m_wildcardHosts.clear();
+
     ////////////////////////////////////
 
     while (1)
@@ -108,8 +122,17 @@ BOOL DnsHosts::Load()
         reader.GetString(1, lpHost->Domain, ARRAYSIZE(lpHost->Domain));
         reader.GetString(2, szIP, ARRAYSIZE(szIP));
 
+        BOOL bIsWildcard = IsWildcardDomain(lpHost->Domain);
+
         lpHost->dwIP = inet_addr(szIP);
-        m_hosts.insert(pair<string, LPDNS_HOST_INFO>(lpHost->Domain, lpHost));
+
+        if (bIsWildcard)
+        {
+            m_wildcardHosts.push_back(*lpHost);
+            free(lpHost);
+        }
+        else
+            m_hosts.insert(pair<string, LPDNS_HOST_INFO>(lpHost->Domain, lpHost));
     }
 
     ////////////////////////////////////

@@ -65,3 +65,46 @@ void			WriteBinaryPacket(const char* title, const void* data, DWORD dwDataLength
 #ifdef __cplusplus
 }
 #endif // __cplusplus
+
+inline BOOL WildCompare(LPCSTR szWild, LPCSTR szString)
+{
+    char* wild = (char*)szWild;
+    char* string = (char*)szString;
+    char* cp, *mp;
+
+    while (*string && *wild != '*')
+    {
+        if (*wild != *string && *wild != '?')
+            return FALSE;
+
+        ++wild;
+        ++string;
+    }
+
+    while (*string)
+    {
+        if (*wild == '*')
+        {
+            if (!*++wild)
+                return TRUE;
+
+            mp = wild;
+            cp = string + 1;
+        }
+        else if (*wild == *string || *wild == '?')
+        {
+            ++wild;
+            ++string;
+        }
+        else
+        {
+            wild = mp;
+            string = cp++;
+        }
+    }
+
+    while (*wild == '*')
+        ++wild;
+
+    return !*wild;
+}
