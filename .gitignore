@@ -23,4 +23,4 @@ Console_Debug/
 Console_Release/
 Service_Debug/
 Service_Release/
-/DnsLogServer/config.cfg
+config.cfg
