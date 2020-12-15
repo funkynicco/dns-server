@@ -5,10 +5,11 @@ workspace "dns-server"
     objdir          "build/%{cfg.action}/obj/%{prj.name}/%{cfg.longname}"
     --characterset    "MBCS"
     cppdialect      "c++17"
-    systemversion   "10.0.18362.0"
+    systemversion   "10.0.19041.0"
+    --systemversion   "10.0.18362.0"
 
     defines {
-        "_LIB"
+        "__DNS_SERVER_TEST"
     }
 
     platforms {
@@ -37,7 +38,8 @@ workspace "dns-server"
 
         defines {
             "_DEBUG",
-            "_CRT_SECURE_NO_WARNINGS"
+            "_CRT_SECURE_NO_WARNINGS",
+            "_WINSOCK_DEPRECATED_NO_WARNINGS"
         }
     
     filter "configurations:Release"
@@ -74,6 +76,6 @@ workspace "dns-server"
             "include",
         }
 
-        postbuildcommands {
-            "py publish.py %{cfg.platform} %{cfg.buildcfg} %{cfg.action}"
-        }
+--        postbuildcommands {
+--            "py publish.py %{cfg.platform} %{cfg.buildcfg} %{cfg.action}"
+--        }
