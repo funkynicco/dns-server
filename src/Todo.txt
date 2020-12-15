@@ -1,0 +1,7 @@
+[ ] Parse the request better so we can send our dns resolve to clients instead of relaying all
+[x] Add in configuration file and "Scanner" implementation
+[x] Make some sort of hash set/map, can be good for future projects too (see CMap.h in _Common2)
+
+* Make the "Enabled" flag work in Main.c so that more servers can run simultaneously.
+* Need to rename all things to proper naming, like "Server" into "DNS Server" etc, if we're going to add Proxy to it...
+* Code that can be shared should be placed in shared folders instead between DNS, Proxy and Web server etc.
