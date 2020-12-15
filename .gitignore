@@ -24,3 +24,7 @@ Console_Release/
 Service_Debug/
 Service_Release/
 config.cfg
+
+dns-server.sln
+dns-server.vcxproj
+dns-server.vcxproj.filters
