@@ -1,4 +1,4 @@
 *
 
 !build/
-!DnsServerTest/config.cfg
+!run/config.cfg

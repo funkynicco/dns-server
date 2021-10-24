@@ -79,18 +79,26 @@ void HitLog::AddHit(const char* domain)
 
 void HitLog::ProcessQueue()
 {
-    SQLClient client;
-    char connectionString[1024];
-    sprintf_s(
-        connectionString,
-        ARRAYSIZE(connectionString),
-        "Driver={SQL Server};SERVER=%s;Database=%s;Trusted_Connection=True",
-        g_Configuration.SQL.Server,
-        g_Configuration.SQL.DatabaseName);
-    if (!client.Open(connectionString))
+#ifdef __DOCKER
+    // unlink the current queue
+    EnterCriticalSection(&m_cs);
+    HitLogItem* head = m_pItemQueueHead;
+    m_pItemQueueHead = m_pItemQueueTail = NULL;
+    LeaveCriticalSection(&m_cs);
+#else
+    sqlite3* db = nullptr;
+    int rc = sqlite3_open_v2("dns.db", &db, SQLITE_OPEN_READWRITE, nullptr);
+    if (rc)
     {
-        const SQLErrorDescription& error = client.GetErrorDescription();
-        Error(__FUNCTION__ " - SQL Connect failed: %s - %s", error.SqlState, error.Message);
+        Error(__FUNCTION__ " - SQL Connect failed: %s", sqlite3_errmsg(db));
+        return;
+    }
+
+    sqlite3_stmt* stmt = nullptr;
+    if (rc = sqlite3_prepare_v2(db, "SELECT * FROM x1234", -1, &stmt, nullptr))
+    {
+        Error(__FUNCTION__ " - Prepare error: %s", sqlite3_errmsg(db));
+        sqlite3_close(db);
         return;
     }
 
@@ -104,14 +112,16 @@ void HitLog::ProcessQueue()
     {
         // process item
         char query[256];
-        sprintf(query, "EXEC [dbo].[AddHit] @domain='%s'", item->Domain);
-        SQLDataReader reader = client.Execute(query);
-        if (!reader.Succeeded())
-        {
-            const SQLErrorDescription& error = reader.GetErrorDescription();
-            Error(__FUNCTION__ " - SQL AddHit Query failed: %s - %s", error.SqlState, error.Message);
-        }
+        sprintf(query, "IF EXISTS(SELECT `id` FROM `hits` WHERE `domain`='%s') UPDATE", item->Domain);
+
+#error abstract away sqlite3 to an API like: db.GetHitsCount(ip) and db.IncrementHitsCount(ip)
+#error sqlite3 dont support IF THEN ELSE etc, so we must fetch the current hits count and increment value and UPDATE or INSERT depending on if we got a value from SELECT
+
+        int rc = sqlite3_exec(db, query, nullptr, nullptr, nullptr);
+        if (rc)
+            Error(__FUNCTION__ " - SQL add hit query failed: %s", sqlite3_errmsg(db));
     }
+#endif
 
     // add back the items to the free slots
     EnterCriticalSection(&m_cs);

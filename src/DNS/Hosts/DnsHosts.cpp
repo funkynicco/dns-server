@@ -68,6 +68,7 @@ BOOL DnsHosts::Load()
     if (!g_Configuration.SQL.Enabled)
         return TRUE;
 
+#ifndef __DOCKER
     SQLClient client;
 
     char connectionString[1024];
@@ -152,6 +153,7 @@ BOOL DnsHosts::Load()
     }
 
     Error(__FUNCTION__ " - Load completed.");
+#endif
 
     return TRUE;
 }
@@ -165,6 +167,7 @@ void DnsHosts::PollReload()
 
     BOOL bDoLoad = FALSE;
     {
+#ifndef __DOCKER
         SQLClient client;
 
         char connectionString[1024];
@@ -193,6 +196,7 @@ void DnsHosts::PollReload()
                 bDoLoad = TRUE;
             }
         }
+#endif
     }
 
     //Error(__FUNCTION__ " - Running check => %s", bDoLoad ? "True" : "False");

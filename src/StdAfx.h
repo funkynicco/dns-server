@@ -30,7 +30,7 @@
 #include "Configuration\Configuration.h"
 #include "Json\Json.h"
 
-#include "SQL\SQLClient.h"
+#include "Libraries\sqlite3\sqlite3.h"
 #include "Networking\SocketPool.h"
 #include "Web\WebServer.h"
 #include "DNS\Hosts\DnsHosts.h"

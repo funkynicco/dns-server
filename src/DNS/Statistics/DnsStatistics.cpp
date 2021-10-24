@@ -57,6 +57,7 @@ void DnsStatistics::WriteChangesToSql()
     if (!g_Configuration.SQL.Enabled)
         return;
 
+#ifndef __DOCKER
     SQLClient client;
     char connectionString[1024];
     GetConnectionString(connectionString, ARRAYSIZE(connectionString));
@@ -85,6 +86,7 @@ void DnsStatistics::WriteChangesToSql()
         stats.CacheHits,
         stats.AverageRequestTimes);
     client.Execute(query);
+#endif
 }
 
 DWORD DnsStatistics::WorkerThread()
