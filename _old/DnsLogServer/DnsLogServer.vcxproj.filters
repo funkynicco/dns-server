@@ -1,0 +1,129 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source">
+      <UniqueIdentifier>{639a0ffb-602d-4b31-84ab-68912886d7dd}</UniqueIdentifier>
+      <Extensions>c, cpp</Extensions>
+    </Filter>
+    <Filter Include="External">
+      <UniqueIdentifier>{090e1e90-c04c-4bdf-ae38-23d1758796a9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="External\Utilities">
+      <UniqueIdentifier>{94a5260b-452c-4182-90e8-d0c59c2869d8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="External\Networking">
+      <UniqueIdentifier>{c7710cc9-1585-4b4d-b6be-685df5a733ed}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Logger">
+      <UniqueIdentifier>{5e9e17e7-6db9-44af-89b0-690fed2eedbd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\LogWebServer">
+      <UniqueIdentifier>{881038ce-73eb-4941-90af-22b0d4a216a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\SimpleServer">
+      <UniqueIdentifier>{970961f6-ad07-446a-816e-767b3b47b82a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="External\Containers">
+      <UniqueIdentifier>{11f0ddaa-9de5-427c-9f82-578ca156f195}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Configuration">
+      <UniqueIdentifier>{20cce435-49df-4844-a1e1-b34b2b702acd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="External\Json">
+      <UniqueIdentifier>{d06798bb-c3f0-4e30-acd8-1cda10c95bae}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Main.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="LogServer.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="LogServerIO.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="LogServerProcess.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Logger\Logger.cpp">
+      <Filter>Source\Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="SimpleServer\ServerBase.cpp">
+      <Filter>Source\SimpleServer</Filter>
+    </ClCompile>
+    <ClCompile Include="LogWebServer\LogWebServer.cpp">
+      <Filter>Source\LogWebServer</Filter>
+    </ClCompile>
+    <ClCompile Include="LogWebServer\HttpParam.cpp">
+      <Filter>Source\LogWebServer</Filter>
+    </ClCompile>
+    <ClCompile Include="LogWebServer\WebClientInfo.cpp">
+      <Filter>Source\LogWebServer</Filter>
+    </ClCompile>
+    <ClCompile Include="Configuration\Configuration.cpp">
+      <Filter>Source\Configuration</Filter>
+    </ClCompile>
+    <ClCompile Include="Logger\LogCache.cpp">
+      <Filter>Source\Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DnsServerTest\Source\Json\Json.cpp">
+      <Filter>External\Json</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DnsServerTest\Source\Utilities\ErrorDescriptionTable.cpp">
+      <Filter>External\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DnsServerTest\Source\Utilities\Scanner.cpp">
+      <Filter>External\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DnsServerTest\Source\Utilities\Utilities.cpp">
+      <Filter>External\Utilities</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="StdAfx.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="LogServer.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DnsServerTest\Source\Utilities\Scanner.h">
+      <Filter>External\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DnsServerTest\Source\Utilities\Utilities.h">
+      <Filter>External\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DnsServerTest\Source\Networking\NetworkDefines.h">
+      <Filter>External\Networking</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger\Logger.h">
+      <Filter>Source\Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="SimpleServer\ServerBase.h">
+      <Filter>Source\SimpleServer</Filter>
+    </ClInclude>
+    <ClInclude Include="LogWebServer\LogWebServer.h">
+      <Filter>Source\LogWebServer</Filter>
+    </ClInclude>
+    <ClInclude Include="LogWebServer\HttpParam.h">
+      <Filter>Source\LogWebServer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DnsServerTest\Source\Containers\CircularBuffer.h">
+      <Filter>External\Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="Configuration\Configuration.h">
+      <Filter>Source\Configuration</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger\LogCache.h">
+      <Filter>Source\Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DnsServerTest\Source\Json\Json.h">
+      <Filter>External\Json</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="LogWebServer\WebHelper.inl">
+      <Filter>Source\LogWebServer</Filter>
+    </None>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,196 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Source\Logger">
+      <UniqueIdentifier>{49845252-7ff3-4f3f-ac1b-16836c91154a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Proxy">
+      <UniqueIdentifier>{bdb00206-a801-4cc4-b76c-35f08ad32962}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\DNS">
+      <UniqueIdentifier>{c6f16c13-0b0c-4a74-9134-01106d120fdd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Networking">
+      <UniqueIdentifier>{ec33ed0f-688c-43b9-831d-7fd3334524a3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Utilities">
+      <UniqueIdentifier>{48be364a-309d-402d-938c-776902d70b25}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Containers">
+      <UniqueIdentifier>{4b726be4-71db-4105-b593-a502fc31f0ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Configuration">
+      <UniqueIdentifier>{0901ca6c-f4d9-43a6-ad9f-4b7fe251e1dd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Web">
+      <UniqueIdentifier>{a77aa745-8747-439c-868e-1642b2d212e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Json">
+      <UniqueIdentifier>{4f6373dd-d30e-40bf-a2d0-dbb8ab0978b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Console">
+      <UniqueIdentifier>{e3c813c7-afb6-44ff-954f-13a858d6c200}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\DNS\Hosts">
+      <UniqueIdentifier>{57cb03a1-06a5-4757-b400-6edc843e9f70}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\SQL">
+      <UniqueIdentifier>{a3728d02-a2d4-492f-9028-a8ec3c0a5d0a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\HitLog">
+      <UniqueIdentifier>{cad40cf8-8592-4e3c-b36a-ee282d76cad4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\DNS\Statistics">
+      <UniqueIdentifier>{6b3e6fbe-eb9a-4287-885d-c3e0002b5200}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Bootstrapper">
+      <UniqueIdentifier>{440b1373-5002-4a38-a47d-d749453b67db}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Source\Logger\Logger.h">
+      <Filter>Source\Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\StdAfx.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Definitions.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Utilities\Scanner.h">
+      <Filter>Source\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Networking\SocketPool.h">
+      <Filter>Source\Networking</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Containers\ArrayContainer.h">
+      <Filter>Source\Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Containers\PtrMap.h">
+      <Filter>Source\Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Configuration\Configuration.h">
+      <Filter>Source\Configuration</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Utilities\Utilities.h">
+      <Filter>Source\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DNS\DnsServer.h">
+      <Filter>Source\DNS</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Networking\NetworkDefines.h">
+      <Filter>Source\Networking</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Web\WebServer.h">
+      <Filter>Source\Web</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Containers\CircularBuffer.h">
+      <Filter>Source\Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\JSON\Json.h">
+      <Filter>Source\Json</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Console\Console.h">
+      <Filter>Source\Console</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DNS\Hosts\DnsHosts.h">
+      <Filter>Source\DNS\Hosts</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\SQL\SQLClient.h">
+      <Filter>Source\SQL</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\HitLog\HitLog.h">
+      <Filter>Source\HitLog</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\DNS\Statistics\DnsStatistics.h">
+      <Filter>Source\DNS\Statistics</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Bootstrapper\Bootstrapper.h">
+      <Filter>Source\Bootstrapper</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Source\DNS\Hosts\DnsHosts.cpp">
+      <Filter>Source\DNS\Hosts</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Configuration\Configuration.cpp">
+      <Filter>Source\Configuration</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Console\Console.cpp">
+      <Filter>Source\Console</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DNS\DnsAllocation.cpp">
+      <Filter>Source\DNS</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DNS\DnsRequestHandler.cpp">
+      <Filter>Source\DNS</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DNS\DnsRequestTimeoutHandler.cpp">
+      <Filter>Source\DNS</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DNS\DnsResolve.cpp">
+      <Filter>Source\DNS</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DNS\DnsServer.cpp">
+      <Filter>Source\DNS</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DNS\DnsServerIO.cpp">
+      <Filter>Source\DNS</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Json\Json.cpp">
+      <Filter>Source\Json</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Logger\Logger.cpp">
+      <Filter>Source\Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Networking\SocketPool.cpp">
+      <Filter>Source\Networking</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Utilities\ErrorDescriptionTable.cpp">
+      <Filter>Source\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Utilities\Scanner.cpp">
+      <Filter>Source\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Utilities\Utilities.cpp">
+      <Filter>Source\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Main.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Web\WebServerIO.cpp">
+      <Filter>Source\Web</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Web\WebServer.cpp">
+      <Filter>Source\Web</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Web\WebAllocation.cpp">
+      <Filter>Source\Web</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SQL\SQLClient.cpp">
+      <Filter>Source\SQL</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SQL\SQLDataReader.cpp">
+      <Filter>Source\SQL</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\HitLog\HitLog.cpp">
+      <Filter>Source\HitLog</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DNS\Statistics\DnsStatistics.cpp">
+      <Filter>Source\DNS\Statistics</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\BootstrapperTest.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Bootstrapper\Bootstrapper.cpp">
+      <Filter>Source\Bootstrapper</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Todo.txt" />
+  </ItemGroup>
+</Project>
