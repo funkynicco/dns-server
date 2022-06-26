@@ -1,4 +1,5 @@
-*
-
-!x64/
-!DnsServerTest/config.cfg
+.git/
+.vs/
+_old/
+build/
+run/

@@ -1,6 +1,15 @@
 Debug/
 Release/
 RelNano/
+_old/
+
+.vscode/*
+!.vscode/c_cpp_properties.json
+
+Makefile
+*.vcxproj
+*.vcxproj.filters
+*.sln
 
 .vs/
 
