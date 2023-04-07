@@ -19,9 +19,13 @@ public:
     const std::string& GetClusterBroadcast() const { return m_cluster_broadcast; }
     int GetClusterJoinTimeout() const { return m_cluster_join_timeout; }
 
-    static std::string GetEnvOrDefault(const char* name, const char* _default = "");
-
 private:
+    void ParseConfigFile(std::string_view filename);
+    void ParseEnvironmentVariables();
+
+    static bool TryGetEnvironmentVariable(const char* name, int* output);
+    static bool TryGetEnvironmentVariable(const char* name, std::string* output);
+    
     std::string m_bind_ip;
     int m_bind_port;
     std::string m_cluster_key;

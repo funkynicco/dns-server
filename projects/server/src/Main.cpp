@@ -132,11 +132,11 @@ int RunServer(ILogger* logger, bool enable_dns_server, const Configuration& conf
     }
     catch (const std::exception& ex)
     {
-        logger->Log(LogType::Error, "Server", nl::String::Format("Failed to start cluster server. Message: %s", ex.what()));
+        logger->Log(LogType::Error, "Server", nl::String::Format("Failed to start cluster server. Message: {}", ex.what()));
         return 1;
     }
 
-    logger->Log(LogType::Info, "Server", nl::String::Format("Started cluster server on 0.0.0.0:%d (broadcast: %s)",
+    logger->Log(LogType::Info, "Server", nl::String::Format("Started cluster server on 0.0.0.0:{} (broadcast: {})",
         configuration.GetClusterPort(),
         configuration.GetClusterBroadcast().c_str()));
 
@@ -150,11 +150,11 @@ int RunServer(ILogger* logger, bool enable_dns_server, const Configuration& conf
         }
         catch (const std::exception& ex)
         {
-            logger->Log(LogType::Error, "Server", nl::String::Format("Failed to start dns server. Message: %s", ex.what()));
+            logger->Log(LogType::Error, "Server", nl::String::Format("Failed to start dns server. Message: {}", ex.what()));
             return 1;
         }
 
-        logger->Log(LogType::Info, "Server", nl::String::Format("Started DNS server on %s:%d", configuration.GetBindIP().c_str(), configuration.GetBindPort()));
+        logger->Log(LogType::Info, "Server", nl::String::Format("Started DNS server on {}:{}", configuration.GetBindIP().c_str(), configuration.GetBindPort()));
 
         try
         {
@@ -162,11 +162,11 @@ int RunServer(ILogger* logger, bool enable_dns_server, const Configuration& conf
         }
         catch (const std::exception& ex)
         {
-            logger->Log(LogType::Error, "Server", nl::String::Format("Failed to start web server. Message: %s", ex.what()));
+            logger->Log(LogType::Error, "Server", nl::String::Format("Failed to start web server. Message: {}", ex.what()));
             return 1;
         }
 
-        logger->Log(LogType::Info, "Server", nl::String::Format("Started Web server on 0.0.0.0:%d", 8550));
+        logger->Log(LogType::Info, "Server", nl::String::Format("Started Web server on 0.0.0.0:{}", 8550));
     }
 
     while (!s_shutdown)
