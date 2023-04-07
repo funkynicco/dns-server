@@ -24,6 +24,7 @@
 #define Sleep( __ms ) usleep( __ms * 1000 )
 #define VK_ESCAPE 0x1B
 #define closesocket( __sock ) close( __sock )
+#define epoll_close(fd) close(fd)
 
 #define ERR_NR errno
 
@@ -32,6 +33,8 @@
 #ifndef __FUNCTION__
 #define __FUNCTION__ __func__
 #endif
+
+#define ARRAYSIZE(a) (sizeof(a) / sizeof(a[0]))
 
 #else
 

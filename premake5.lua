@@ -44,7 +44,9 @@ workspace "ClusteredDnsServer"
     filter {}
 
     defines {
-        "_WINSOCK_DEPRECATED_NO_WARNINGS"
+        "_WINSOCK_DEPRECATED_NO_WARNINGS",
+        "_CRT_SECURE_NO_WARNINGS",
+        "NL_ARCHITECTURE_X64"
     }
 
     include "projects/server/server.lua"

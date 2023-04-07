@@ -1,0 +1,14 @@
+version: '3.7'
+services:
+  cdns:
+    image: ${REGISTRY_URL}/cdns:${CDNS_VERSION}
+    environment:
+      - BIND_IP
+      - BIND_PORT
+      - CLUSTER_KEY
+      - CLUSTER_IP
+      - CLUSTER_PORT
+      - CLUSTER_SUBNET
+      - CLUSTER_BROADCAST
+    network_mode: host
+    privileged: true

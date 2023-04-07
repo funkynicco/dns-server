@@ -4,6 +4,13 @@
 #include <stdint.h>
 #include <thread>
 #include <atomic>
+#include <regex>
+#include <exception>
+#include <unordered_map>
+#include <string>
+#include <mutex>
+#include <shared_mutex>
+#include <queue>
 
 #ifdef _WIN32
 #include <WinSock2.h>
@@ -26,5 +33,16 @@
 #include <stdarg.h>
 #endif
 
+#ifndef _DEBUG
+#define _DEBUG
+#endif
+
+#include <NativeLib/Exceptions.h>
+#include <NativeLib/String.h>
 
 #include "PlatformDefines.h"
+#include "Network/Core/EpollSimulationWindows.h"
+#include "Configuration.h"
+#include "Logging/Logger.h"
+
+char TranslateAsciiByte(char c);

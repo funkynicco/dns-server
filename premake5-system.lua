@@ -4,6 +4,7 @@ lib.addStandardLibs = function(options)
     filter { "kind:not StaticLib", "system:windows" }
         links {
             "ws2_32.lib",
+            "dbghelp.lib",
         }
 
     --filter { "kind:not StaticLib", "system:linux" }
@@ -17,17 +18,26 @@ end
 lib.addNativeLib = function(options)
     if not options or not options.no_include then
         includedirs {
-            "../libraries/nativelib/include"
+            "%{wks.location}/libraries/nativelib/include"
         }
     end
 
-    filter "kind:not StaticLib"
+    filter { "kind:not StaticLib", "system:windows" }
         libdirs {
             "%{wks.location}/libraries/nativelib/lib/vs2022/x64"
         }
 
         links {
             "nativelib_d.lib",
+        }
+
+    filter { "kind:not StaticLib", "system:not windows" }
+        libdirs {
+            "%{wks.location}/libraries/nativelib/build"
+        }
+
+        links {
+            "nativelib",
         }
 
     filter {}

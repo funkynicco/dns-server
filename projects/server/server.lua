@@ -1,9 +1,13 @@
 project "Server"
     kind        "ConsoleApp"
-    targetname  "ClusteredDnsServer"
+    targetname  "clusterdns"
     --dependson   "Engine"
-    pchheader   "StdAfx.h"
-    pchsource   "src/StdAfx.cpp"
+
+    filter "system:windows" -- Makefile otherwise attempts to compile StdAfx.h ...
+        pchheader   "StdAfx.h"
+    
+    filter {}
+        pchsource   "src/StdAfx.cpp"
 
     --links { "Engine" }
 
@@ -18,9 +22,8 @@ project "Server"
 
     includedirs {
         "src",
-        "include",
-        "%{}"
+        "include"
     }
 
     lib.addStandardLibs()
---    lib.addNativeLib()
+    lib.addNativeLib()

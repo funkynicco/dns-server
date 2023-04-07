@@ -33,3 +33,9 @@ Console_Release/
 Service_Debug/
 Service_Release/
 /DnsLogServer/config.cfg
+_lin_proj_test/
+.idea/
+run/
+run-docker.py
+
+deploy/test-setup-alpines.py

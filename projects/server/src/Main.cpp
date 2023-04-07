@@ -1,6 +1,14 @@
 #include "StdAfx.h"
-#include "Network/UdpServer.h"
 #include "Network/WindowsWsaBootstrap.h"
+#include "Network/NetUtils.h"
+
+#include "Network/Cluster/ClusterServer.h"
+#include "Network/Dns/DnsServer.h"
+#include "Network/Web/WebServer.h"
+
+#include "Network/PacketSequence.h"
+
+#include <NativeLib/SystemLayer/SystemLayer.h>
 
 #ifdef _WIN32
 #define ThreadSleep(ms) Sleep(ms)
@@ -14,83 +22,9 @@
  * sync dns lists
  */
 
+void ShowHelp(ILogger* logger);
+
 static bool s_shutdown = false;
-
-class MyUdpServer : public UdpServer
-{
-public:
-    virtual void HandlePacket(sockaddr_in from, const char* data, size_t len) override;
-};
-
-char TranslateAsciiByte(char c)
-{
-    if ((c >= 'a' && c <= 'z') ||
-        (c >= 'A' && c <= 'Z') ||
-        (c >= '0' && c <= '9'))
-        return c;
-
-    switch (c)
-    {
-    case '.':
-    case ' ':
-    case '?':
-    case '@':
-    case '!':
-    case '_':
-    case '-':
-    case '(':
-    case ')':
-    case '{':
-    case '}':
-    case ',':
-    case ';':
-    case ':':
-    case '=':
-        return c;
-    }
-
-    return '.';
-}
-
-void MyUdpServer::HandlePacket(sockaddr_in from, const char* data, size_t len)
-{
-    printf(
-        "HandlePacket (%d.%d.%d.%d:%d):\n",
-        (unsigned char)(from.sin_addr.s_addr & 0xff),
-        (unsigned char)(from.sin_addr.s_addr >> 8 & 0xff),
-        (unsigned char)(from.sin_addr.s_addr >> 16 & 0xff),
-        (unsigned char)(from.sin_addr.s_addr >> 24 & 0xff),
-        (int)htons(from.sin_port));
-
-    for (size_t i = 0; i < len; i++)
-    {
-        if (i != 0 &&
-            i % 16 == 0)
-        {
-            printf("\n");
-        }
-
-        printf("%c", TranslateAsciiByte(data[i]));
-    }
-    printf("\n");
-
-    sockaddr_in fw;
-    fw.sin_family = AF_INET;
-    fw.sin_addr.s_addr = inet_addr("10.0.13.3"); // dns server on VM-net
-    fw.sin_port = htons(53);
-
-    SOCKET s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    sendto(s, data, (int)len, 0, (const sockaddr*)&fw, sizeof(fw));
-    
-    char* buffer = (char*)malloc(65535);
-    socklen_t addr_len = sizeof(fw);
-    int received = recvfrom(s, buffer, 65535, 0, (sockaddr*)&fw, &addr_len);
-
-    closesocket(s);
-
-    SendTo(from, buffer, received);
-    free(buffer);
-}
 
 void HandleCtrlC(int s)
 {
@@ -109,40 +43,145 @@ void InstallCtrlCHandler()
     handler.sa_flags = 0;
 
     sigaction(SIGINT, &handler, nullptr);
+    sigaction(SIGTERM, &handler, nullptr);
 #endif
 }
+
+int RunServer(ILogger* logger, bool enable_dns_server, const Configuration& configuration);
 
 int main(int argc, char** argv)
 {
     InstallCtrlCHandler();
-    printf("Welcome.\n");
 
+    nl::systemlayer::SetDefaultSystemLayerFunctions();
+
+    // disable console buffering for docker
+    setvbuf(stdout, nullptr, _IONBF, 0);
+
+    //TestSequence();
+    //return 0;
+    logging::Logger logger;
+
+    Configuration configuration;
+
+    if (argc == 1)
+    {
+        ShowHelp(&logger);
+        return 1;
+    }
+
+    for (int i = 1; i < argc; i++)
+    {
+        if (strcmp(argv[i], "--help") == 0 ||
+            strcmp(argv[i], "-h") == 0)
+        {
+            ShowHelp(&logger);
+        }
+        else
+        {
+            // command
+            auto enable_dns_server = false;
+            if (strcmp(argv[i], "server") == 0)
+            {
+                enable_dns_server = true;
+            }
+            else if (strcmp(argv[i], "backup") == 0)
+            {
+            }
+            else
+            {
+                logger.Log(LogType::Error, "Main", nl::String::Format("Invalid argument: '%s'", argv[i]));
+                return 1;
+            }
+
+            return RunServer(&logger, enable_dns_server, configuration);
+        }
+    }
+
+    return 0;
+}
+
+void ShowHelp(ILogger* logger)
+{
+    logger->Log(LogType::Info, "Help", "Usage: clusterdns [options] <command>");
+    logger->Log(LogType::Info, "Help", "Command can be one of:");
+    logger->Log(LogType::Info, "Help", "  server    - Runs the DNS server and serves requests");
+    logger->Log(LogType::Info, "Help", "  backup    - Runs only the cluster backup service to distribute database");
+}
+
+int RunServer(ILogger* logger, bool enable_dns_server, const Configuration& configuration)
+{
 #ifdef _WIN32
-    WsaBootstrap wsa;
+    network::WsaBootstrap wsa;
 #endif
 
-    sockaddr_in addr;
-    addr.sin_family = AF_INET;
-#ifdef _WIN32
-    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    addr.sin_port = htons(53);
-#else
-    addr.sin_addr.s_addr = inet_addr("0.0.0.0");
-    addr.sin_port = htons(6466);
-#endif
+    auto cluster_server = network::cluster::ClusterServer(configuration, logger);
 
-    MyUdpServer server;
-    server.Start(addr);
+    // only allow packets from the cluster ip subnet
+    cluster_server
+        .GetIPv4Filter()
+        .AddRule(configuration.GetClusterIP().c_str(), configuration.GetClusterSubnet().c_str());
+
+    cluster_server.SetMyAddress(network::MakeAddr(configuration.GetClusterIP().c_str()));
+
+    try
+    {
+        // on linux, broadcast server must listen on 0.0.0.0,
+        // so we have to filter the incoming packets by their source IP to match correct network
+        cluster_server.Start(network::MakeAddr("0.0.0.0", configuration.GetClusterPort()), true);
+    }
+    catch (const std::exception& ex)
+    {
+        logger->Log(LogType::Error, "Server", nl::String::Format("Failed to start cluster server. Message: %s", ex.what()));
+        return 1;
+    }
+
+    logger->Log(LogType::Info, "Server", nl::String::Format("Started cluster server on 0.0.0.0:%d (broadcast: %s)",
+        configuration.GetClusterPort(),
+        configuration.GetClusterBroadcast().c_str()));
+
+    auto dns_server = network::dns::DnsServer(configuration, logger);
+    auto web_server = network::web::WebServer(configuration, logger);
+    if (enable_dns_server)
+    {
+        try
+        {
+            dns_server.Start(network::MakeAddr(configuration.GetBindIP().c_str(), configuration.GetBindPort()));
+        }
+        catch (const std::exception& ex)
+        {
+            logger->Log(LogType::Error, "Server", nl::String::Format("Failed to start dns server. Message: %s", ex.what()));
+            return 1;
+        }
+
+        logger->Log(LogType::Info, "Server", nl::String::Format("Started DNS server on %s:%d", configuration.GetBindIP().c_str(), configuration.GetBindPort()));
+
+        try
+        {
+            web_server.Start(network::MakeAddr("0.0.0.0", 8550));
+        }
+        catch (const std::exception& ex)
+        {
+            logger->Log(LogType::Error, "Server", nl::String::Format("Failed to start web server. Message: %s", ex.what()));
+            return 1;
+        }
+
+        logger->Log(LogType::Info, "Server", nl::String::Format("Started Web server on 0.0.0.0:%d", 8550));
+    }
 
     while (!s_shutdown)
     {
-        Sleep(500);
+        cluster_server.Process();
+
+        if (enable_dns_server)
+        {
+            dns_server.Process();
+            web_server.Process();
+        }
+
+        Sleep(100);
     }
 
-    printf("Shutting down ...\n");
-
-    server.Close();
-
-    printf("Goodbye.\n");
+    logger->Log(LogType::Info, "Server", "Shutting down ...");
     return 0;
 }
