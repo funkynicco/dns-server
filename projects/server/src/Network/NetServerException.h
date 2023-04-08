@@ -8,7 +8,7 @@ namespace network
     class NetServerException : public std::exception
     {
     public:
-        NetServerException(const char* message, int err_nr = 0)
+        explicit NetServerException(const char* message, const int err_nr = 0)
         {
             m_what = FormatExceptionMessage(message, err_nr);
         }
@@ -21,9 +21,9 @@ namespace network
     private:
         std::string m_what;
 
-        static std::string FormatExceptionMessage(const char* message, int err_nr)
+        static std::string FormatExceptionMessage(const char* message, const int err_nr)
         {
-            size_t len = strlen(message);
+            const size_t len = strlen(message);
 
             std::string res;
             res.reserve(len);

@@ -34,14 +34,14 @@ namespace network::web
         m_epollfd = 0;
     }
     
-    void WebServer::Start(sockaddr_in bind_address)
+    void WebServer::Start(const sockaddr_in bind_address)
     {
         if (m_socket != INVALID_SOCKET)
         {
             throw NetServerException("Server already started");
         }
 
-        int epfd = epoll_create1(0);
+        const int epfd = epoll_create1(0);
         if (!epfd)
         {
             throw NetServerException("Failed to create epoll instance");
@@ -56,7 +56,7 @@ namespace network::web
 
         if (bind(s, (const sockaddr*)&bind_address, sizeof(bind_address)) == SOCKET_ERROR)
         {
-            int err_nr = ERR_NR;
+            const int err_nr = ERR_NR;
             epoll_close(epfd);
             closesocket(s);
             throw NetServerException("Failed to bind socket to address, code: {err_nr}", err_nr);
@@ -64,7 +64,7 @@ namespace network::web
 
         if (listen(s, SOMAXCONN) == SOCKET_ERROR)
         {
-            int err_nr = ERR_NR;
+            const int err_nr = ERR_NR;
             epoll_close(epfd);
             closesocket(s);
             throw NetServerException("Failed to listen on socket, code: {err_nr}", err_nr);
@@ -75,7 +75,7 @@ namespace network::web
         ev.data.u64 = m_socket;
         if (epoll_ctl(epfd, EPOLL_CTL_ADD, s, &ev) != 0)
         {
-            int err_nr = ERR_NR;
+            const int err_nr = ERR_NR;
             epoll_close(epfd);
             closesocket(s);
             throw NetServerException("Failed add socket to epoll instance, code: {err_nr}", err_nr);
@@ -88,7 +88,7 @@ namespace network::web
     void WebServer::Process()
     {
         epoll_event events[16];
-        int num = epoll_wait(m_epollfd, events, ARRAYSIZE(events), 1);
+        const int num = epoll_wait(m_epollfd, events, ARRAYSIZE(events), 1);
         for (int i = 0; i < num; i++)
         {
             epoll_event* ev = &events[i];
@@ -112,14 +112,13 @@ namespace network::web
             }
             else
             {
-                static char buffer[65536];
-
                 auto it = m_clients.find(ev->data.u64);
                 if (it != m_clients.end())
                 {
-                    auto client = it->second;
+                    static char buffer[65536];
+                    const auto client = it->second;
 
-                    int read = recv(client->GetSocket(), buffer, sizeof(buffer), 0);
+                    const int read = recv(client->GetSocket(), buffer, sizeof(buffer), 0);
                     if (read <= 0)
                     {
                         delete client;

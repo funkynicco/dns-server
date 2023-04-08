@@ -14,7 +14,6 @@ namespace network::cluster
             Connected,
         };
 
-    public:
         ClusterServerClient(const Configuration& configuration, ILogger* logger, sockaddr_in addr);
         ~ClusterServerClient();
 
@@ -32,18 +31,18 @@ namespace network::cluster
         void SendPing();
         void SendPong();
 
-        void Delete(std::string reason)
+        void Delete(const std::string& reason)
         {
             m_delete = true;
             m_delete_reason = reason;
         }
 
-        bool IsDelete() const { return m_delete; }
-        const std::string& GetDeleteReason() const { return m_delete_reason; }
+        [[nodiscard]] bool IsDelete() const { return m_delete; }
+        [[nodiscard]] const std::string& GetDeleteReason() const { return m_delete_reason; }
 
-        sockaddr_in GetAddress() const { return m_address; }
+        [[nodiscard]] sockaddr_in GetAddress() const { return m_address; }
         void SetAddress(sockaddr_in addr) { m_address = addr; }
-        SOCKET GetSocket() const { return m_socket; }
+        [[nodiscard]] SOCKET GetSocket() const { return m_socket; }
 
     private:
         const Configuration& m_configuration;

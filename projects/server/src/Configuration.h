@@ -10,14 +10,14 @@ public:
     Configuration& operator =(const Configuration&) = delete;
     Configuration& operator =(Configuration&&) noexcept = delete;
 
-    const std::string& GetBindIP() const { return m_bind_ip; }
-    int GetBindPort() const { return m_bind_port; }
-    const std::string& GetClusterKey() const { return m_cluster_key; }
-    const std::string& GetClusterIP() const { return m_cluster_ip; }
-    int GetClusterPort() const { return m_cluster_port; }
-    const std::string& GetClusterSubnet() const { return m_cluster_subnet; }
-    const std::string& GetClusterBroadcast() const { return m_cluster_broadcast; }
-    int GetClusterJoinTimeout() const { return m_cluster_join_timeout; }
+    [[nodiscard]] const std::string& GetBindIP() const { return m_bind_ip; }
+    [[nodiscard]] int GetBindPort() const { return m_bind_port; }
+    [[nodiscard]] const std::string& GetClusterKey() const { return m_cluster_key; }
+    [[nodiscard]] const std::string& GetClusterIP() const { return m_cluster_ip; }
+    [[nodiscard]] int GetClusterPort() const { return m_cluster_port; }
+    [[nodiscard]] const std::string& GetClusterSubnet() const { return m_cluster_subnet; }
+    [[nodiscard]] const std::string& GetClusterBroadcast() const { return m_cluster_broadcast; }
+    [[nodiscard]] int GetClusterJoinTimeout() const { return m_cluster_join_timeout; }
 
 private:
     void ParseConfigFile(std::string_view filename);

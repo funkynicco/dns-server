@@ -12,7 +12,7 @@ EpollSocketHandler::~EpollSocketHandler()
 {
 }
 
-int EpollSocketHandler::Add(SOCKET fd, epoll_event* event)
+int EpollSocketHandler::Add(const SOCKET fd, const epoll_event* event)
 {
     if (event->events != EPOLLIN) // Anything but EPOLLIN is not supported
     {
@@ -35,13 +35,13 @@ int EpollSocketHandler::Add(SOCKET fd, epoll_event* event)
         return -1;
     }
 
-    size_t i = m_nSockets++;
+    const size_t i = m_nSockets++;
     m_aSockets[i].Socket = fd;
     memcpy(&m_aSockets[i].Event, event, sizeof(epoll_event));
     return 0;
 }
 
-int EpollSocketHandler::Remove(SOCKET fd)
+int EpollSocketHandler::Remove(const SOCKET fd)
 {
     for (size_t i = 0; i < m_nSockets; i++)
     {
@@ -57,7 +57,7 @@ int EpollSocketHandler::Remove(SOCKET fd)
     return -1;
 }
 
-int EpollSocketHandler::Update(SOCKET fd, epoll_event* event)
+int EpollSocketHandler::Update(const SOCKET fd, const epoll_event* event)
 {
     if (event->events != EPOLLIN) // Anything but EPOLLIN is not supported
     {
@@ -78,7 +78,7 @@ int EpollSocketHandler::Update(SOCKET fd, epoll_event* event)
     return -1;
 }
 
-int EpollSocketHandler::Wait(epoll_event* events, int maxevents, int timeout)
+int EpollSocketHandler::Wait(epoll_event* events, const int maxevents, const int timeout)
 {
     /* 
      * Note: The timeout is not a true time for this Wait function.
@@ -107,7 +107,7 @@ int EpollSocketHandler::Wait(epoll_event* events, int maxevents, int timeout)
     while (i < m_nSockets)
     {
         // add to the fd set
-        size_t num = min(FD_SETSIZE, m_nSockets - i);
+        const size_t num = min(FD_SETSIZE, m_nSockets - i);
         for (size_t j = 0; j < num; j++)
         {
             SOCKET s = m_aSockets[i + j].Socket;

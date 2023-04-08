@@ -23,7 +23,7 @@ Configuration::Configuration()
 static bool TryCheckAndFetchToken(
     nl::parsing::Scanner& scanner,
     nl::parsing::Token& token,
-    std::string_view name,
+    const std::string_view name,
     std::string* output)
 {
     if (token != name)
@@ -31,11 +31,9 @@ static bool TryCheckAndFetchToken(
         return false;
     }
 
-    scanner.SaveContext();
     token = scanner.Next(); // =
     if (token != "=")
     {
-        scanner.RestoreContext();
         return false;
     }
 
@@ -43,7 +41,6 @@ static bool TryCheckAndFetchToken(
     token = scanner.Next();
     if (!token.IsString())
     {
-        scanner.RestoreContext();
         return false;
     }
 
@@ -54,7 +51,7 @@ static bool TryCheckAndFetchToken(
 static bool TryCheckAndFetchToken(
     nl::parsing::Scanner& scanner,
     nl::parsing::Token& token,
-    std::string_view name,
+    const std::string_view name,
     int* output)
 {
     std::string value;
@@ -67,7 +64,7 @@ static bool TryCheckAndFetchToken(
     return true;
 }
 
-void Configuration::ParseConfigFile(std::string_view filename)
+void Configuration::ParseConfigFile(const std::string_view filename)
 {
     if (!nl::file::Exists(filename))
     {
@@ -77,6 +74,8 @@ void Configuration::ParseConfigFile(std::string_view filename)
     try
     {
         auto scanner = nl::parsing::Scanner::FromFile(filename);
+        scanner.EnableExtension(nl::parsing::Extension::HashTagComment);
+        
         auto token = scanner.Next();
         while (token)
         {
@@ -111,7 +110,7 @@ void Configuration::ParseEnvironmentVariables()
 
 bool Configuration::TryGetEnvironmentVariable(const char* name, int* output)
 {
-    auto val = getenv(name);
+    const auto val = getenv(name);
     if (!val)
     {
         return false;
@@ -123,7 +122,7 @@ bool Configuration::TryGetEnvironmentVariable(const char* name, int* output)
 
 bool Configuration::TryGetEnvironmentVariable(const char* name, std::string* output)
 {
-    auto val = getenv(name);
+    const auto val = getenv(name);
     if (!val)
     {
         return false;

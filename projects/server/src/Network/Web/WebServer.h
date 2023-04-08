@@ -7,8 +7,8 @@ namespace network::web
     public:
         ~WebServerClient();
 
-        SOCKET GetSocket() { return m_socket; }
-        sockaddr_in GetAddress() const { return m_addr; }
+        [[nodiscard]] SOCKET GetSocket() const { return m_socket; }
+        [[nodiscard]] sockaddr_in GetAddress() const { return m_addr; }
 
     private:
         friend class WebServer;

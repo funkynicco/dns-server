@@ -109,7 +109,7 @@ void ShowHelp(ILogger* logger)
     logger->Log(LogType::Info, "Help", "  backup    - Runs only the cluster backup service to distribute database");
 }
 
-int RunServer(ILogger* logger, bool enable_dns_server, const Configuration& configuration)
+int RunServer(ILogger* logger, const bool enable_dns_server, const Configuration& configuration)
 {
 #ifdef _WIN32
     network::WsaBootstrap wsa;

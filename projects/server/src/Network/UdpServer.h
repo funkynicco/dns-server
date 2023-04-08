@@ -18,7 +18,7 @@ namespace network
 
         void Close();
         void Start(sockaddr_in bind_address, bool accept_broadcasts = false);
-        void SendTo(sockaddr_in to, const char* data, size_t len);
+        void SendTo(sockaddr_in to, const char* data, size_t len) const;
 
     protected:
         virtual void HandlePacket(sockaddr_in from, const char* data, size_t len) {}

@@ -66,8 +66,8 @@ int epoll_ctl(int epfd, int op, SOCKET fd, epoll_event* event)
 
 int epoll_wait(int epfd, epoll_event* events, int maxevents, int timeout)
 {
-    auto index = epfd - 1;
-    EpollSocketHandler* handler = nullptr;
+    const auto index = epfd - 1;
+    EpollSocketHandler* handler;
     if (index < 0 ||
         index >= ARRAYSIZE(s_aSocketHandlers) ||
         !(handler = s_aSocketHandlers[index]))

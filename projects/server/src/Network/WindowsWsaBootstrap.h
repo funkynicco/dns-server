@@ -16,10 +16,15 @@ namespace network
             WSACleanup();
         }
 
-        operator bool() const { return m_result == 0; }
+        WsaBootstrap(const WsaBootstrap&) = delete;
+        WsaBootstrap(WsaBootstrap&&) = delete;
+        WsaBootstrap& operator =(const WsaBootstrap&) = delete;
+        WsaBootstrap& operator =(WsaBootstrap&&) = delete;
 
-        int GetResult() const { return m_result; }
-        WSADATA GetData() const { return m_wd; }
+        explicit operator bool() const { return m_result == 0; }
+
+        [[nodiscard]] int GetResult() const { return m_result; }
+        [[nodiscard]] WSADATA GetData() const { return m_wd; }
 
     private:
         WSADATA m_wd;

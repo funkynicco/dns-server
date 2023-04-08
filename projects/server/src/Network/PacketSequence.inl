@@ -16,11 +16,11 @@ namespace network
     {
         if (m_pfnDestroyItem)
         {
-            for (size_t i = 0; i < MAX_PACKET_SEQUENCE; i++)
+            for (auto& item : m_sequence)
             {
-                if (m_sequence[i])
+                if (item)
                 {
-                    m_pfnDestroyItem(m_sequence[i]);
+                    m_pfnDestroyItem(item);
                 }
             }
         }

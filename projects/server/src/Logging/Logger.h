@@ -17,10 +17,6 @@ namespace logging
     class Logger : public ILogger
     {
     public:
-
         virtual void Log(LogType logType, const char* category, const char* message) override;
-
-    private:
-
     };
 }

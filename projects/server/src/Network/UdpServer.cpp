@@ -29,7 +29,7 @@ namespace network
         m_socket = INVALID_SOCKET;
     }
 
-    void UdpServer::Start(sockaddr_in bind_address, bool accept_broadcasts)
+    void UdpServer::Start(const sockaddr_in bind_address, const bool accept_broadcasts)
     {
         if (m_socket != INVALID_SOCKET)
         {
@@ -46,17 +46,17 @@ namespace network
 
         if (bind(s, (const sockaddr*)&bind_address, sizeof(bind_address)) == SOCKET_ERROR)
         {
-            int err_nr = ERR_NR;
+            const int err_nr = ERR_NR;
             closesocket(s);
             throw NetServerException("Failed to bind socket to address, code: {err_nr}", err_nr);
         }
 
         if (accept_broadcasts)
         {
-            int enabled = 1;
+            constexpr int enabled = 1;
             if (setsockopt(s, SOL_SOCKET, SO_BROADCAST, (const char*)&enabled, sizeof(enabled)) != 0)
             {
-                int err_nr = ERR_NR;
+                const int err_nr = ERR_NR;
                 closesocket(s);
                 throw NetServerException("Failed to enable broadcast mode on socket, code: {err_nr}", err_nr);
             }
@@ -66,7 +66,7 @@ namespace network
         m_thread = std::thread(StaticWorkerThread, this);
     }
 
-    void UdpServer::SendTo(sockaddr_in to, const char* data, size_t len)
+    void UdpServer::SendTo(const sockaddr_in to, const char* data, const size_t len) const
     {
         if (m_socket == INVALID_SOCKET)
         {
@@ -81,9 +81,9 @@ namespace network
 
     void UdpServer::WorkerThread()
     {
-        char* buffer = (char*)malloc(4096); // includes packet size and sizeof(sockaddr_in)
+        const auto buffer = (char*)malloc(4096); // includes packet size and sizeof(sockaddr_in)
 
-        struct timeval tv = {};
+        timeval tv = {};
         tv.tv_usec = 250000;
 
         fd_set fd;
@@ -98,7 +98,7 @@ namespace network
             {
                 sockaddr_in addr;
                 socklen_t addr_len = sizeof(addr);
-                int received = recvfrom(
+                const int received = recvfrom(
                     m_socket,
                     buffer + sizeof(sockaddr_in) + sizeof(int),
                     4096 - sizeof(sockaddr_in) - sizeof(int),

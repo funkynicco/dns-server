@@ -14,7 +14,7 @@ namespace network::cluster
 
     public:
         ClusterServer(const Configuration& configuration, ILogger* logger);
-        virtual ~ClusterServer();
+        virtual ~ClusterServer() override;
 
         IPv4Filter& GetIPv4Filter() { return m_ipv4filter; }
         void SetMyAddress(in_addr addr) { m_myaddr = addr; }

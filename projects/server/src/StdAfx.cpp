@@ -25,7 +25,7 @@ char TranslateAsciiByte(char c)
     case ':':
     case '=':
         return c;
+    default:
+        return '.';
     }
-
-    return '.';
 }

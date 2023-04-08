@@ -10,14 +10,19 @@ namespace network
     public:
         typedef void (*pfDestroyItem)(T* value);
 
-        PacketSequence(pfDestroyItem pfnDestroyItem = nullptr);
+        explicit PacketSequence(pfDestroyItem pfnDestroyItem = nullptr);
         ~PacketSequence();
+
+        PacketSequence(const PacketSequence&) = delete;
+        PacketSequence(PacketSequence&&) = delete;
+        PacketSequence& operator =(const PacketSequence&) = delete;
+        PacketSequence& operator =(PacketSequence&&) = delete;
 
         void Set(uint16_t sequence, T* value);
         T* Next();
         T* Peek();
-        const T* Peek() const;
-        bool HasNext() const;
+        [[nodiscard]] const T* Peek() const;
+        [[nodiscard]] bool HasNext() const;
 
     private:
         pfDestroyItem m_pfnDestroyItem;
@@ -40,7 +45,7 @@ inline void TestSequence()
 test:
     for (;;)
     {
-        auto next = test.Next();
+        const auto next = test.Next();
         if (!next)
         {
             break;

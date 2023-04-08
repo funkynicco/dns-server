@@ -2,9 +2,9 @@
 
 namespace network::cluster
 {
-    const char PACKET_SIGNATURE[] = "CDNS";
-    const size_t MAX_PACKET_DATA_SIZE = 1024;
-    const size_t MIN_PACKET_SIZE = 9; // signature, header, sequence and datasize variables
+    constexpr char PACKET_SIGNATURE[] = "CDNS";
+    constexpr size_t MAX_PACKET_DATA_SIZE = 1024;
+    constexpr size_t MIN_PACKET_SIZE = 9; // signature, header, sequence and datasize variables
 
     enum class PacketHeader : uint8_t
     {

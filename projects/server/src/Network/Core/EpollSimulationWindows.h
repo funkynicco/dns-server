@@ -74,9 +74,9 @@ public:
     EpollSocketHandler();
     ~EpollSocketHandler();
 
-    int Add(SOCKET fd, epoll_event* event);
+    int Add(SOCKET fd, const epoll_event* event);
     int Remove(SOCKET fd);
-    int Update(SOCKET fd, epoll_event* event);
+    int Update(SOCKET fd, const epoll_event* event);
     int Wait(epoll_event* events, int maxevents, int timeout);
 
 private:

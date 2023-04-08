@@ -32,7 +32,7 @@ namespace network::cluster
      * application closes the system will clean up the memory.
      */
 
-    const size_t ContiguousPacketsToAllocate = 8;
+    constexpr size_t ContiguousPacketsToAllocate = 8;
 
     std::mutex ClusterPacketPool::s_mutex;
     ClusterPacket* ClusterPacketPool::s_pool = nullptr;
@@ -44,7 +44,7 @@ namespace network::cluster
         {
             // allocate packets in contiguous memory
             // (this memory is only deallocated on application close)
-            auto packets = (ClusterPacket*)malloc(sizeof(ClusterPacket) * ContiguousPacketsToAllocate);
+            const auto packets = (ClusterPacket*)malloc(sizeof(ClusterPacket) * ContiguousPacketsToAllocate);
             for (size_t i = 0; i < ContiguousPacketsToAllocate; i++)
             {
                 auto current = &packets[i];
@@ -54,7 +54,7 @@ namespace network::cluster
             }
         }
 
-        auto packet = s_pool;
+        const auto packet = s_pool;
         s_pool = s_pool->next;
         return packet;
     }

@@ -51,7 +51,7 @@ namespace network::cluster
 
     void ClusterServerClient::Process()
     {
-        time_t now = time(nullptr);
+        const auto now = time(nullptr);
 
         if (m_state == State::Connected)
         {
@@ -91,7 +91,7 @@ namespace network::cluster
             return;
         }
 
-        auto handler = m_packets[pid];
+        const auto handler = m_packets[pid];
         if (!handler)
         {
             return;
@@ -137,7 +137,7 @@ namespace network::cluster
 
     void ClusterServerClient::Send(const ClusterPacketData* packet_data)
     {
-        int sent = sendto(
+        const int sent = sendto(
             m_socket,
             (const char*)packet_data,
             MIN_PACKET_SIZE + packet_data->DataSize,
@@ -154,35 +154,35 @@ namespace network::cluster
 
     void ClusterServerClient::SendHandshakeRequest()
     {
-        auto data = ClusterPacketData::Initialize(PacketHeader::HandshakeRequest, 0);
+        const auto data = ClusterPacketData::Initialize(PacketHeader::HandshakeRequest, 0);
         Send(&data);
     }
 
     void ClusterServerClient::SendHandshakeResponse()
     {
-        auto data = ClusterPacketData::Initialize(PacketHeader::HandshakeResponse, 0);
+        const auto data = ClusterPacketData::Initialize(PacketHeader::HandshakeResponse, 0);
         Send(&data);
     }
 
     void ClusterServerClient::SendHandshakeResponseAcknowledged()
     {
-        auto data = ClusterPacketData::Initialize(PacketHeader::HandshakeResponseAcknowledged, 0);
+        const auto data = ClusterPacketData::Initialize(PacketHeader::HandshakeResponseAcknowledged, 0);
         Send(&data);
     }
 
     void ClusterServerClient::SendPing()
     {
-        uint16_t sequence = m_sequence_send++;
+        const uint16_t sequence = m_sequence_send++;
 
-        auto data = ClusterPacketData::Initialize(PacketHeader::Ping, sequence);
+        const auto data = ClusterPacketData::Initialize(PacketHeader::Ping, sequence);
         Send(&data);
     }
 
     void ClusterServerClient::SendPong()
     {
-        uint16_t sequence = m_sequence_send++;
+        const uint16_t sequence = m_sequence_send++;
 
-        auto data = ClusterPacketData::Initialize(PacketHeader::Pong, sequence);
+        const auto data = ClusterPacketData::Initialize(PacketHeader::Pong, sequence);
         Send(&data);
     }
 }

@@ -33,7 +33,7 @@ namespace network::cluster
 
     ClusterServer::~ClusterServer()
     {
-        for (auto it : m_clients)
+        for (const auto it : m_clients)
         {
             delete it.second;
         }
@@ -57,13 +57,13 @@ namespace network::cluster
             return;
         }
 
-        auto packet_data = reinterpret_cast<const ClusterPacketData*>(data);
+        const auto packet_data = reinterpret_cast<const ClusterPacketData*>(data);
         if (!ValidateClusterPacketData(len, packet_data))
         {
             return;
         }
 
-        auto packet = ClusterPacketPool::Acquire();
+        const auto packet = ClusterPacketPool::Acquire();
         packet->From = from;
         memcpy(&packet->Data, packet_data, sizeof(packet->Data));
 
@@ -116,7 +116,7 @@ namespace network::cluster
             return;
         }
 
-        auto handler = m_packets[pid];
+        const auto handler = m_packets[pid];
         if (!handler)
         {
             packet->Release();
@@ -156,7 +156,7 @@ namespace network::cluster
         ProcessPacketQueue();
         ReceiveAllClients();
 
-        time_t now = time(nullptr);
+        const auto now = time(nullptr);
 
         if (!m_joined)
         {
@@ -170,7 +170,7 @@ namespace network::cluster
             {
                 m_tNextBroadcastJoin = now + 1;
 
-                auto join_packet = ClusterPacketData::Initialize(PacketHeader::JoinRequest, 0);
+                const auto join_packet = ClusterPacketData::Initialize(PacketHeader::JoinRequest, 0);
                 Broadcast(&join_packet);
             }
         }
@@ -208,10 +208,8 @@ namespace network::cluster
 
     void ClusterServer::ReceiveAllClients()
     {
-        static char buffer[4096];
-
         epoll_event events[MAX_EPOLL_EVENTS];
-        int ready = epoll_wait(m_epollfd, events, MAX_EPOLL_EVENTS, 1);
+        const int ready = epoll_wait(m_epollfd, events, MAX_EPOLL_EVENTS, 1);
         if (ready < 0)
         {
             m_logger->Log(LogType::Error, "ClusterServer", nl::String::Format("epoll_wait failed with code: %d", errno));
@@ -219,8 +217,9 @@ namespace network::cluster
 
         for (int i = 0; i < ready; i++)
         {
-            auto ev = &events[i];
-            auto client = static_cast<ClusterServerClient*>(ev->data.ptr);
+            static char buffer[4096];
+            const auto ev = &events[i];
+            const auto client = static_cast<ClusterServerClient*>(ev->data.ptr);
             if (client->IsDelete())
             {
                 continue;
@@ -228,7 +227,7 @@ namespace network::cluster
 
             sockaddr_in addr;
             socklen_t addrlen = sizeof(addr);
-            int received = recvfrom(client->GetSocket(), buffer, sizeof(buffer), 0, (sockaddr*)&addr, &addrlen);
+            const int received = recvfrom(client->GetSocket(), buffer, sizeof(buffer), 0, (sockaddr*)&addr, &addrlen);
             if (received <= 0)
             {
                 // error
@@ -236,7 +235,7 @@ namespace network::cluster
                 continue;
             }
 
-            auto packet_data = reinterpret_cast<const ClusterPacketData*>(buffer);
+            const auto packet_data = reinterpret_cast<const ClusterPacketData*>(buffer);
             if (!ValidateClusterPacketData((size_t)received, packet_data))
             {
                 continue; // drop invalid packet
@@ -247,7 +246,7 @@ namespace network::cluster
         }
     }
 
-    void ClusterServer::Send(sockaddr_in to, const ClusterPacketData* packet_data)
+    void ClusterServer::Send(const sockaddr_in to, const ClusterPacketData* packet_data)
     {
         SendTo(
             to,
@@ -291,9 +290,9 @@ namespace network::cluster
         memcpy(buf, &addr, sizeof(addr));
         buf += sizeof(addr);
 
-        for (const auto it : m_clients)
+        for (const auto [_, client] : m_clients)
         {
-            addr = it.second->GetAddress().sin_addr.s_addr;
+            addr = client->GetAddress().sin_addr.s_addr;
             memcpy(buf, &addr, sizeof(addr));
             buf += sizeof(addr);
         }
@@ -315,7 +314,7 @@ namespace network::cluster
 
         m_logger->Log(LogType::Debug, "ClusterServer", nl::String::Format("Received join response from %s", AddrToStr(packet->From.sin_addr).c_str()));
 
-        uint16_t clients = *(uint16_t*)packet->Data.Data;
+        const uint16_t clients = *(uint16_t*)packet->Data.Data;
         m_logger->Log(LogType::Debug, "ClusterServer", nl::String::Format("Clients: %d", clients));
         for (uint16_t i = 0; i < clients; i++)
         {
@@ -356,7 +355,7 @@ namespace network::cluster
             sockaddr_in addr_in;
             addr_in.sin_family = AF_INET;
             addr_in.sin_addr.s_addr = addr;
-            addr_in.sin_port = htons(m_configuration.GetClusterPort());
+            addr_in.sin_port = htons((u_short)m_configuration.GetClusterPort());
 
             auto client = new ClusterServerClient(m_configuration, m_logger, addr_in);
 
