@@ -1,0 +1,7 @@
+build/
+deploy/
+bin/
+obj/
+
+appsettings.*.json
+launchSettings.json
