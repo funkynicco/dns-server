@@ -7,9 +7,7 @@
 
 namespace network::cluster
 {
-    ClusterServerClient::ClusterServerClient(const Configuration& configuration, ILogger* logger, sockaddr_in addr) :
-        m_configuration(configuration),
-        m_logger(logger)
+    ClusterServerClient::ClusterServerClient(const sockaddr_in addr)
     {
         m_delete = false;
         m_address = addr;
@@ -70,11 +68,13 @@ namespace network::cluster
 
     void ClusterServerClient::OnPacketReceived(const ClusterPacketData* packet_data)
     {
+        const auto logger = Globals::Get<ILogger>();
+        
         if (packet_data->Header != PacketHeader::Ping &&
             packet_data->Header != PacketHeader::Pong)
         {
-            m_logger->Log(LogType::Debug, "ClusterServer", nl::String::Format(
-                "[Client] Received %s (seq: %d) from %s:%d",
+            logger->Log(LogType::Debug, "ClusterServer", nl::String::Format(
+                "[Client] Received {} (seq: {}) from {}:{}",
                 PacketHeaderToString(packet_data->Header).c_str(),
                 packet_data->Sequence,
                 AddrToStr(m_address.sin_addr).c_str(),
@@ -102,12 +102,14 @@ namespace network::cluster
 
     void ClusterServerClient::OnHandshakeResponse(const ClusterPacketData* packet_data)
     {
+        const auto logger = Globals::Get<ILogger>();
+        
         m_state = State::Connected;
         m_tLastSentPing = time(nullptr);
         SendHandshakeResponseAcknowledged();
         
-        m_logger->Log(LogType::Debug, "ClusterServer", nl::String::Format(
-            "[%s:%d] State changed to connected!",
+        logger->Log(LogType::Debug, "ClusterServer", nl::String::Format(
+            "[{}:{}] State changed to connected!",
             AddrToStr(m_address.sin_addr).c_str(),
             ntohs(m_address.sin_port)
         ));
@@ -115,11 +117,13 @@ namespace network::cluster
 
     void ClusterServerClient::OnHandshakeResponseAcknowledged(const ClusterPacketData* packet_data)
     {
+        const auto logger = Globals::Get<ILogger>();
+        
         m_state = State::Connected;
         m_tLastSentPing = time(nullptr);
 
-        m_logger->Log(LogType::Debug, "ClusterServer", nl::String::Format(
-            "[%s:%d] State changed to connected!",
+        logger->Log(LogType::Debug, "ClusterServer", nl::String::Format(
+            "[{}:{}] State changed to connected!",
             AddrToStr(m_address.sin_addr).c_str(),
             ntohs(m_address.sin_port)
         ));

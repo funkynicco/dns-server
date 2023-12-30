@@ -11,10 +11,7 @@ namespace network
         UdpServer();
         virtual ~UdpServer();
 
-        UdpServer(const UdpServer&) = delete;
-        UdpServer(UdpServer&&) = delete;
-        UdpServer& operator =(const UdpServer&) = delete;
-        UdpServer& operator =(UdpServer&&) = delete;
+        DEFINE_COPY_MOVE_DELETE(UdpServer);
 
         void Close();
         void Start(sockaddr_in bind_address, bool accept_broadcasts = false);

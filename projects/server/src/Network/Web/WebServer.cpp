@@ -5,9 +5,7 @@
 
 namespace network::web
 {
-    WebServer::WebServer(const Configuration& configuration, ILogger* logger) :
-        m_configuration(configuration),
-        m_logger(logger),
+    WebServer::WebServer() :
         m_socket(INVALID_SOCKET),
         m_epollfd(0)
     {
@@ -102,10 +100,10 @@ namespace network::web
                 {
                     auto client = new WebServerClient(c, addr);
 
-                    epoll_event ev = {};
-                    ev.data.u64 = c;
-                    ev.events = EPOLLIN;
-                    epoll_ctl(m_epollfd, EPOLL_CTL_ADD, client->GetSocket(), &ev); // TODO: check return value
+                    epoll_event receive_event {};
+                    receive_event.data.u64 = c;
+                    receive_event.events = EPOLLIN;
+                    epoll_ctl(m_epollfd, EPOLL_CTL_ADD, client->GetSocket(), &receive_event); // TODO: check return value
 
                     m_clients.insert(std::make_pair(client->GetSocket(), client));
                 }

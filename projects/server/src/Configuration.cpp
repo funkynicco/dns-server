@@ -12,6 +12,8 @@ Configuration::Configuration()
     m_cluster_port = 6852;
     m_cluster_subnet = "255.255.255.0";
     m_cluster_join_timeout = 10;
+    m_web_bind_ip = "0.0.0.0";
+    m_web_bind_port = 8550;
 
     // parse configuration file first - if found
     ParseConfigFile("config.cfg");

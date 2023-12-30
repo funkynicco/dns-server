@@ -22,7 +22,7 @@
  * sync dns lists
  */
 
-void ShowHelp(ILogger* logger);
+void ShowHelp();
 
 static bool s_shutdown = false;
 
@@ -47,26 +47,25 @@ void InstallCtrlCHandler()
 #endif
 }
 
-int RunServer(ILogger* logger, bool enable_dns_server, const Configuration& configuration);
+int RunServer(bool enable_dns_server);
 
 int main(int argc, char** argv)
 {
+    const auto helper = Globals::Set(new Helper);
+    
     InstallCtrlCHandler();
 
     nl::systemlayer::SetDefaultSystemLayerFunctions();
 
     // disable console buffering for docker
-    setvbuf(stdout, nullptr, _IONBF, 0);
+    helper->DisableConsoleBuffering();
 
-    //TestSequence();
-    //return 0;
-    logging::Logger logger;
-
-    Configuration configuration;
+    const auto logger = Globals::Set<ILogger>(new logging::Logger);
+    Globals::Set<IConfiguration>(new Configuration);
 
     if (argc == 1)
     {
-        ShowHelp(&logger);
+        ShowHelp();
         return 1;
     }
 
@@ -75,7 +74,7 @@ int main(int argc, char** argv)
         if (strcmp(argv[i], "--help") == 0 ||
             strcmp(argv[i], "-h") == 0)
         {
-            ShowHelp(&logger);
+            ShowHelp();
         }
         else
         {
@@ -90,45 +89,50 @@ int main(int argc, char** argv)
             }
             else
             {
-                logger.Log(LogType::Error, "Main", nl::String::Format("Invalid argument: '%s'", argv[i]));
+                logger->Log(LogType::Error, "Main", nl::String::Format("Invalid argument: '{}'", argv[i]));
                 return 1;
             }
 
-            return RunServer(&logger, enable_dns_server, configuration);
+            return RunServer(enable_dns_server);
         }
     }
 
     return 0;
 }
 
-void ShowHelp(ILogger* logger)
+void ShowHelp()
 {
+    const auto logger = Globals::Get<ILogger>();
     logger->Log(LogType::Info, "Help", "Usage: clusterdns [options] <command>");
     logger->Log(LogType::Info, "Help", "Command can be one of:");
     logger->Log(LogType::Info, "Help", "  server    - Runs the DNS server and serves requests");
     logger->Log(LogType::Info, "Help", "  backup    - Runs only the cluster backup service to distribute database");
 }
 
-int RunServer(ILogger* logger, const bool enable_dns_server, const Configuration& configuration)
+int RunServer(const bool enable_dns_server)
 {
 #ifdef _WIN32
     network::WsaBootstrap wsa;
 #endif
 
-    auto cluster_server = network::cluster::ClusterServer(configuration, logger);
+    const auto database = Globals::Set(new Database);
+    database->Initialize();
+
+    const auto configuration = Globals::Get<IConfiguration>();
+    const auto logger = Globals::Get<ILogger>();
+    const auto cluster_server = Globals::Set(new network::cluster::ClusterServer);
 
     // only allow packets from the cluster ip subnet
-    cluster_server
-        .GetIPv4Filter()
-        .AddRule(configuration.GetClusterIP().c_str(), configuration.GetClusterSubnet().c_str());
+    cluster_server->GetIPv4Filter()
+        .AddRule(configuration->GetClusterIP().c_str(), configuration->GetClusterSubnet().c_str());
 
-    cluster_server.SetMyAddress(network::MakeAddr(configuration.GetClusterIP().c_str()));
+    cluster_server->SetMyAddress(network::MakeAddr(configuration->GetClusterIP().c_str()));
 
     try
     {
         // on linux, broadcast server must listen on 0.0.0.0,
         // so we have to filter the incoming packets by their source IP to match correct network
-        cluster_server.Start(network::MakeAddr("0.0.0.0", configuration.GetClusterPort()), true);
+        cluster_server->Start(network::MakeAddr("0.0.0.0", configuration->GetClusterPort()), true);
     }
     catch (const std::exception& ex)
     {
@@ -137,16 +141,16 @@ int RunServer(ILogger* logger, const bool enable_dns_server, const Configuration
     }
 
     logger->Log(LogType::Info, "Server", nl::String::Format("Started cluster server on 0.0.0.0:{} (broadcast: {})",
-        configuration.GetClusterPort(),
-        configuration.GetClusterBroadcast().c_str()));
+        configuration->GetClusterPort(),
+        configuration->GetClusterBroadcast().c_str()));
 
-    auto dns_server = network::dns::DnsServer(configuration, logger);
-    auto web_server = network::web::WebServer(configuration, logger);
+    const auto dns_server = Globals::Set(new network::dns::DnsServer);
+    const auto web_server = Globals::Set(new network::web::WebServer);
     if (enable_dns_server)
     {
         try
         {
-            dns_server.Start(network::MakeAddr(configuration.GetBindIP().c_str(), configuration.GetBindPort()));
+            dns_server->Start(network::MakeAddr(configuration->GetBindIP().c_str(), configuration->GetBindPort()));
         }
         catch (const std::exception& ex)
         {
@@ -154,11 +158,11 @@ int RunServer(ILogger* logger, const bool enable_dns_server, const Configuration
             return 1;
         }
 
-        logger->Log(LogType::Info, "Server", nl::String::Format("Started DNS server on {}:{}", configuration.GetBindIP().c_str(), configuration.GetBindPort()));
+        logger->Log(LogType::Info, "Server", nl::String::Format("Started DNS server on {}:{}", configuration->GetBindIP().c_str(), configuration->GetBindPort()));
 
         try
         {
-            web_server.Start(network::MakeAddr("0.0.0.0", 8550));
+            web_server->Start(network::MakeAddr(configuration->GetWebBindIP().c_str(), configuration->GetWebBindPort()));
         }
         catch (const std::exception& ex)
         {
@@ -166,22 +170,25 @@ int RunServer(ILogger* logger, const bool enable_dns_server, const Configuration
             return 1;
         }
 
-        logger->Log(LogType::Info, "Server", nl::String::Format("Started Web server on 0.0.0.0:{}", 8550));
+        logger->Log(LogType::Info, "Server", nl::String::Format(
+            "Started Web server on {}:{}",
+            configuration->GetWebBindIP().c_str(), configuration->GetWebBindPort()));
     }
 
     while (!s_shutdown)
     {
-        cluster_server.Process();
+        cluster_server->Process();
 
         if (enable_dns_server)
         {
-            dns_server.Process();
-            web_server.Process();
+            dns_server->Process();
+            web_server->Process();
         }
 
         Sleep(100);
     }
 
     logger->Log(LogType::Info, "Server", "Shutting down ...");
+    Globals::Destroy();
     return 0;
 }

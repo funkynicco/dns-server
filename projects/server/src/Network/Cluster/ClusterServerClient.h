@@ -14,8 +14,10 @@ namespace network::cluster
             Connected,
         };
 
-        ClusterServerClient(const Configuration& configuration, ILogger* logger, sockaddr_in addr);
+        explicit ClusterServerClient(sockaddr_in addr);
         ~ClusterServerClient();
+
+        DEFINE_COPY_MOVE_DELETE(ClusterServerClient);
 
         void Process();
         void OnPacketReceived(const ClusterPacketData* packet_data);
@@ -45,8 +47,6 @@ namespace network::cluster
         [[nodiscard]] SOCKET GetSocket() const { return m_socket; }
 
     private:
-        const Configuration& m_configuration;
-        ILogger* m_logger;
         std::string m_delete_reason;
         bool m_delete;
         sockaddr_in m_address;

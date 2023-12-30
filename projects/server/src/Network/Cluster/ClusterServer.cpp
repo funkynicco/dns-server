@@ -5,23 +5,24 @@
 
 namespace network::cluster
 {
-    ClusterServer::ClusterServer(const Configuration& configuration, ILogger* logger) :
-        m_configuration(configuration),
-        m_logger(logger)
+    ClusterServer::ClusterServer()
     {
+        const auto configuration = Globals::Get<IConfiguration>();
+        const auto logger = Globals::Get<ILogger>();
+        
         memset(&m_myaddr, 0, sizeof(m_myaddr));
         m_broadcastaddr = MakeAddr(
-            configuration.GetClusterBroadcast().c_str(),
-            configuration.GetClusterPort()
+            configuration->GetClusterBroadcast().c_str(),
+            configuration->GetClusterPort()
         );
 
         m_joined = false;
         m_tNextBroadcastJoin = 0;
-        m_tTimeoutJoining = time(nullptr) + configuration.GetClusterJoinTimeout();
+        m_tTimeoutJoining = time(nullptr) + configuration->GetClusterJoinTimeout();
         m_epollfd = epoll_create1(0);
         if (m_epollfd <= 0)
         {
-            logger->Log(LogType::Error, "ClusterServer", nl::String::Format("epoll_create1 failed with code: %d", errno));
+            logger->Log(LogType::Error, "ClusterServer", nl::String::Format("epoll_create1 failed with code: {}", errno));
         }
 
         // bind functions
@@ -96,15 +97,17 @@ namespace network::cluster
 
     void ClusterServer::ProcessPacket(ClusterPacket* packet)
     {
+        const auto logger = Globals::Get<ILogger>();
+        
         char ip[16];
         AddrToStr(ip, packet->From.sin_addr);
-        m_logger->Log(LogType::Debug, "ClusterServer", nl::String::Format(
-            "[%s:%d] %s (seq: %d, size: %d)",
+        logger->Log(LogType::Debug, "ClusterServer", nl::String::Format(
+            "[{}:{}] {} (seq: {}, size: {})",
             ip,
             ntohs(packet->From.sin_port),
             PacketHeaderToString(packet->Data.Header).c_str(),
-            (int)packet->Data.Sequence,
-            (int)packet->Data.DataSize
+            packet->Data.Sequence,
+            packet->Data.DataSize
         ));
 
         // packet handler...
@@ -153,6 +156,8 @@ namespace network::cluster
 
     void ClusterServer::Process()
     {
+        const auto logger = Globals::Get<ILogger>();
+        
         ProcessPacketQueue();
         ReceiveAllClients();
 
@@ -163,7 +168,7 @@ namespace network::cluster
             if (m_tTimeoutJoining < now)
             {
                 // ... start a new cluster
-                m_logger->Log(LogType::Info, "ClusterServer", "Timeout joining cluster - starting new...");
+                logger->Log(LogType::Info, "ClusterServer", "Timeout joining cluster - starting new...");
                 m_joined = true;
             }
             else if (m_tNextBroadcastJoin < now)
@@ -186,11 +191,11 @@ namespace network::cluster
             {
                 if (epoll_ctl(m_epollfd, EPOLL_CTL_DEL, it->second->GetSocket(), nullptr) != 0)
                 {
-                    m_logger->Log(LogType::Error, "ClusterServer", nl::String::Format("epoll_ctl del failed with code: %d", errno));
+                    logger->Log(LogType::Error, "ClusterServer", nl::String::Format("epoll_ctl del failed with code: {}", errno));
                 }
 
-                m_logger->Log(LogType::Debug, "ClusterServer", nl::String::Format(
-                    "Deleted %s:%d: %s",
+                logger->Log(LogType::Debug, "ClusterServer", nl::String::Format(
+                    "Deleted {}:{}: {}",
                     AddrToStr(it->second->GetAddress().sin_addr).c_str(),
                     ntohs(it->second->GetAddress().sin_port),
                     it->second->GetDeleteReason().c_str()
@@ -208,11 +213,13 @@ namespace network::cluster
 
     void ClusterServer::ReceiveAllClients()
     {
+        const auto logger = Globals::Get<ILogger>();
+        
         epoll_event events[MAX_EPOLL_EVENTS];
         const int ready = epoll_wait(m_epollfd, events, MAX_EPOLL_EVENTS, 1);
         if (ready < 0)
         {
-            m_logger->Log(LogType::Error, "ClusterServer", nl::String::Format("epoll_wait failed with code: %d", errno));
+            logger->Log(LogType::Error, "ClusterServer", nl::String::Format("epoll_wait failed with code: {}", errno));
         }
 
         for (int i = 0; i < ready; i++)
@@ -305,6 +312,9 @@ namespace network::cluster
 
     void ClusterServer::OnJoinResponse(ClusterPacket* packet)
     {
+        const auto configuration = Globals::Get<IConfiguration>();
+        const auto logger = Globals::Get<ILogger>();
+        
         //log("OnJoinResponse from %s", AddrToStr(from.sin_addr).c_str());
 
         // join information from another server in the cluster...
@@ -312,14 +322,14 @@ namespace network::cluster
 
         m_joined = true;
 
-        m_logger->Log(LogType::Debug, "ClusterServer", nl::String::Format("Received join response from %s", AddrToStr(packet->From.sin_addr).c_str()));
+        logger->Log(LogType::Debug, "ClusterServer", nl::String::Format("Received join response from {}", AddrToStr(packet->From.sin_addr).c_str()));
 
         const uint16_t clients = *(uint16_t*)packet->Data.Data;
-        m_logger->Log(LogType::Debug, "ClusterServer", nl::String::Format("Clients: %d", clients));
+        logger->Log(LogType::Debug, "ClusterServer", nl::String::Format("Clients: {}", clients));
         for (uint16_t i = 0; i < clients; i++)
         {
             uint32_t addr = *(uint32_t*)(packet->Data.Data + sizeof(uint16_t) + sizeof(uint32_t) * i);
-            m_logger->Log(LogType::Debug, "ClusterServer", nl::String::Format("[%d]: %s", i, AddrToStr(addr).c_str()));
+            logger->Log(LogType::Debug, "ClusterServer", nl::String::Format("[{}]: {}", i, AddrToStr(addr).c_str()));
 
             if (addr == m_myaddr.s_addr)
             {
@@ -339,11 +349,11 @@ namespace network::cluster
                 // client is pending deletion, carry out deletion now forcefully and remove from m_clients
                 if (epoll_ctl(m_epollfd, EPOLL_CTL_DEL, it->second->GetSocket(), nullptr) != 0)
                 {
-                    m_logger->Log(LogType::Error, "ClusterServer", nl::String::Format("epoll_ctl del failed with code: %d", errno));
+                    logger->Log(LogType::Error, "ClusterServer", nl::String::Format("epoll_ctl del failed with code: {}", errno));
                 }
 
-                m_logger->Log(LogType::Debug, "ClusterServer", nl::String::Format(
-                    "[OnJoinResponse] Deleted %s: %s",
+                logger->Log(LogType::Debug, "ClusterServer", nl::String::Format(
+                    "[OnJoinResponse] Deleted {}: {}",
                     AddrToStr(it->second->GetAddress().sin_addr).c_str(),
                     it->second->GetDeleteReason().c_str()
                 ));
@@ -355,9 +365,9 @@ namespace network::cluster
             sockaddr_in addr_in;
             addr_in.sin_family = AF_INET;
             addr_in.sin_addr.s_addr = addr;
-            addr_in.sin_port = htons((u_short)m_configuration.GetClusterPort());
+            addr_in.sin_port = htons((u_short)configuration->GetClusterPort());
 
-            auto client = new ClusterServerClient(m_configuration, m_logger, addr_in);
+            auto client = new ClusterServerClient(addr_in);
 
             // register epoll
             epoll_event ev;
@@ -365,12 +375,12 @@ namespace network::cluster
             ev.data.ptr = client;
             if (epoll_ctl(m_epollfd, EPOLL_CTL_ADD, client->GetSocket(), &ev) != 0)
             {
-                m_logger->Log(LogType::Error, "ClusterServer", nl::String::Format("epoll_ctl add failed with code: %d", errno));
+                logger->Log(LogType::Error, "ClusterServer", nl::String::Format("epoll_ctl add failed with code: {}", errno));
             }
 
             m_clients.insert(std::make_pair(addr, client));
-            m_logger->Log(LogType::Debug, "ClusterServer", nl::String::Format(
-                "[OnJoinResponse] Added %s:%d to m_clients",
+            logger->Log(LogType::Debug, "ClusterServer", nl::String::Format(
+                "[OnJoinResponse] Added {}:{} to m_clients",
                 AddrToStr(addr_in.sin_addr).c_str(),
                 ntohs(addr_in.sin_port)
             ));
@@ -381,18 +391,18 @@ namespace network::cluster
         packet->Release();
     }
 
-//#error simulate epoll with select on windows..., platform specific implementation...
-
     void ClusterServer::OnHandshakeRequest(ClusterPacket* packet)
     {
-        m_logger->Log(LogType::Debug, "ClusterServer", "OnHandshakeRequest...");
+        const auto logger = Globals::Get<ILogger>();
+        
+        logger->Log(LogType::Debug, "ClusterServer", "OnHandshakeRequest...");
 
         ClusterServerClient* client;
 
         auto it = m_clients.find(packet->From.sin_addr.s_addr);
         if (it == m_clients.end())
         {
-            client = new ClusterServerClient(m_configuration, m_logger, packet->From);
+            client = new ClusterServerClient(packet->From);
             
             // register epoll
             epoll_event ev;
@@ -400,12 +410,12 @@ namespace network::cluster
             ev.data.ptr = client;
             if (epoll_ctl(m_epollfd, EPOLL_CTL_ADD, client->GetSocket(), &ev) != 0)
             {
-                m_logger->Log(LogType::Error, "ClusterServer", nl::String::Format("epoll_ctl add failed with code: %d", errno));
+                logger->Log(LogType::Error, "ClusterServer", nl::String::Format("epoll_ctl add failed with code: {}", errno));
             }
 
             m_clients.insert(std::make_pair(packet->From.sin_addr.s_addr, client));
-            m_logger->Log(LogType::Debug, "ClusterServer", nl::String::Format(
-                "[OnHandshakeRequest] Added %s:%d to m_clients",
+            logger->Log(LogType::Debug, "ClusterServer", nl::String::Format(
+                "[OnHandshakeRequest] Added {}:{} to m_clients",
                 AddrToStr(packet->From.sin_addr).c_str(),
                 ntohs(packet->From.sin_port)
             ));
@@ -418,7 +428,7 @@ namespace network::cluster
 
         packet->Release();
 
-        m_logger->Log(LogType::Debug, "ClusterServer", "Sent handshake response");
+        logger->Log(LogType::Debug, "ClusterServer", "Sent handshake response");
         client->SendHandshakeResponse();
     }
 }

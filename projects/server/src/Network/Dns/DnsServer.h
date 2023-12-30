@@ -5,16 +5,14 @@
 
 namespace network::dns
 {
-    class DnsServer : public UdpServer
+    class DnsServer final : public UdpServer
     {
     public:
-        DnsServer(const Configuration& configuration, ILogger* logger);
+        DnsServer() = default;        
 
         virtual void HandlePacket(sockaddr_in from, const char* data, size_t len) override;
         void Process();
 
     private:
-        const Configuration& m_configuration;
-        ILogger* m_logger;
     };
 }

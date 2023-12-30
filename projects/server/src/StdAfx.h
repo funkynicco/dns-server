@@ -40,9 +40,40 @@
 #include <NativeLib/Exceptions.h>
 #include <NativeLib/String.h>
 
+#define DEFINE_COPY_MOVE_DELETE(ClassName) \
+    ClassName(const ClassName&) = delete; \
+    ClassName(ClassName&&) noexcept = delete; \
+    ClassName& operator =(const ClassName&) = delete; \
+    ClassName& operator =(ClassName&&) noexcept = delete
+
+#define DEFINE_COPY_MOVE_DEFAULT(ClassName) \
+    ClassName(const ClassName&) = default; \
+    ClassName(ClassName&&) noexcept = default; \
+    ClassName& operator =(const ClassName&) = default; \
+    ClassName& operator =(ClassName&&) noexcept = default
+
+#define DEFINE_COPY_DELETE(ClassName) \
+    ClassName(const ClassName&) = delete; \
+    ClassName& operator =(const ClassName&) = delete
+
+#define DEFINE_COPY_DEFAULT(ClassName) \
+    ClassName(const ClassName&) = default; \
+    ClassName& operator =(const ClassName&) = default
+
+#define DEFINE_MOVE_DELETE(ClassName) \
+    ClassName(ClassName&&) noexcept = delete; \
+    ClassName& operator =(ClassName&&) noexcept = delete
+
+#define DEFINE_MOVE_DEFAULT(ClassName) \
+    ClassName(ClassName&&) noexcept = default; \
+    ClassName& operator =(ClassName&&) noexcept = default
+
 #include "PlatformDefines.h"
 #include "Network/Core/EpollSimulationWindows.h"
 #include "Configuration.h"
+#include "Database.h"
 #include "Logging/Logger.h"
+#include "Globals.h"
+#include "Helper.h"
 
 char TranslateAsciiByte(char c);

@@ -19,7 +19,7 @@ namespace network::cluster
         AnnounceMemberLeave,
     };
 
-    inline std::string PacketHeaderToString(PacketHeader header)
+    inline std::string PacketHeaderToString(const PacketHeader header)
     {
         switch (header)
         {

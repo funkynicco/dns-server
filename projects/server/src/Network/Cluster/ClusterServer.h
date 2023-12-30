@@ -8,16 +8,18 @@
 
 namespace network::cluster
 {
-    class ClusterServer : public UdpServer
+    class ClusterServer final : public UdpServer
     {
         static constexpr int MAX_EPOLL_EVENTS = 64;
 
     public:
-        ClusterServer(const Configuration& configuration, ILogger* logger);
+        ClusterServer();
         virtual ~ClusterServer() override;
 
+        DEFINE_COPY_MOVE_DELETE(ClusterServer);
+
         IPv4Filter& GetIPv4Filter() { return m_ipv4filter; }
-        void SetMyAddress(in_addr addr) { m_myaddr = addr; }
+        void SetMyAddress(const in_addr addr) { m_myaddr = addr; }
 
         virtual void HandlePacket(sockaddr_in from, const char* data, size_t len) override;
         void ProcessPacket(ClusterPacket* packet);
@@ -34,9 +36,6 @@ namespace network::cluster
         void OnHandshakeRequest(ClusterPacket* packet);
 
     private:
-        const Configuration& m_configuration;
-        ILogger* m_logger;
-
         IPv4Filter m_ipv4filter;
         in_addr m_myaddr;
         sockaddr_in m_broadcastaddr;

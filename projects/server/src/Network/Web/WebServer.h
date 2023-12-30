@@ -7,6 +7,8 @@ namespace network::web
     public:
         ~WebServerClient();
 
+        DEFINE_COPY_MOVE_DELETE(WebServerClient);
+
         [[nodiscard]] SOCKET GetSocket() const { return m_socket; }
         [[nodiscard]] sockaddr_in GetAddress() const { return m_addr; }
 
@@ -22,13 +24,10 @@ namespace network::web
     class WebServer
     {
     public:
-        WebServer(const Configuration& configuration, ILogger* logger);
+        WebServer();
         ~WebServer();
 
-        WebServer(const WebServer&) = delete;
-        WebServer(WebServer&&) = delete;
-        WebServer& operator =(const WebServer&) = delete;
-        WebServer& operator =(WebServer&&) = delete;
+        DEFINE_COPY_MOVE_DELETE(WebServer);
         
         void Close();
         void Start(sockaddr_in bind_address);
@@ -36,9 +35,6 @@ namespace network::web
         void Process();
 
     private:
-        const Configuration& m_configuration;
-        ILogger* m_logger;
-
         SOCKET m_socket;
         int m_epollfd;
         std::unordered_map<SOCKET, WebServerClient*> m_clients;

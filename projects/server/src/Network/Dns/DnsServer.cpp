@@ -3,23 +3,19 @@
 
 namespace network::dns
 {
-    DnsServer::DnsServer(const Configuration& configuration, ILogger* logger) :
-        m_configuration(configuration),
-        m_logger(logger)
-    {
-    }
-
     void DnsServer::HandlePacket(sockaddr_in from, const char* data, size_t len)
     {
+        const auto logger = Globals::Get<ILogger>();
+        
         char ip[16];
         AddrToStr(ip, from.sin_addr);
 
         nl::String str;
 
         str += nl::String::Format(
-            "DnsServer::HandlePacket (%s:%d):\n",
+            "DnsServer::HandlePacket ({}:{}):\n",
             ip,
-            (int)htons(from.sin_port));
+            htons(from.sin_port));
 
         for (size_t i = 0; i < len; i++)
         {
@@ -32,7 +28,7 @@ namespace network::dns
             str.Append(TranslateAsciiByte(data[i]));
         }
 
-        m_logger->Log(LogType::Debug, "DnsServer", str);
+        logger->Log(LogType::Debug, "DnsServer", str);
 
 #if 0
         sockaddr_in fw;

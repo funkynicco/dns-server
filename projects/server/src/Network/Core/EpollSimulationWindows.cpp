@@ -41,7 +41,7 @@ void epoll_close(int epfd)
 int epoll_ctl(int epfd, int op, SOCKET fd, epoll_event* event)
 {
     auto index = epfd - 1;
-    EpollSocketHandler* handler = nullptr;
+    EpollSocketHandler* handler;
     if (index < 0 ||
         index >= ARRAYSIZE(s_aSocketHandlers) ||
         !(handler = s_aSocketHandlers[index]))
