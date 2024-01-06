@@ -2,6 +2,7 @@
 using System.Net.Sockets;
 using System.Text;
 using DnsServer.Hosting.Protocol;
+using DnsServer.Hosting.Resolvers;
 using DnsServer.Options;
 using DnsServer.Utilities;
 using Microsoft.Extensions.Options;
@@ -12,23 +13,26 @@ public interface IDomainResolverServer : IBackgroundService
 {
 }
 
-public class DomainResolverServer : IDomainResolverServer, IResolverResponseListener
+public interface IResolverResponseSender
 {
-    enum AsyncType
-    {
-        Client,
-        Proxy
-    }
-    
+    void SendResponse(ExtendedSocketAsyncEventArgs args);
+}
+
+public class DomainResolverServer : IDomainResolverServer, IResolverResponseListener, IResolverResponseSender
+{
     private readonly ApiSettings _settings;
     private readonly ILogger _logger;
     private readonly EndPoint _dnsServerEndPoint;
     private readonly ISocketAsyncEventArgsPool _socketAsyncEventArgsPool;
     private readonly ResolverProxy _resolverProxy;
-    
+    private readonly IEnumerable<BaseDomainResolver> _resolvers;
+
     private Socket? _socket;
     private long _ioReceive;
     private long _ioSend;
+
+    private readonly bool _logDebug;
+    private readonly bool _logTrace;
 
     public TimeSpan PollTime => TimeSpan.FromSeconds(1);
 
@@ -36,11 +40,13 @@ public class DomainResolverServer : IDomainResolverServer, IResolverResponseList
         IOptions<ApiSettings> settings,
         ILogger<DomainResolverServer> logger,
         ILogger<ResolverProxy> resolverProxyLogger,
-        ISocketAsyncEventArgsPool socketAsyncEventArgsPool)
+        ISocketAsyncEventArgsPool socketAsyncEventArgsPool,
+        IEnumerable<BaseDomainResolver> resolvers)
     {
         _settings = settings.Value;
         _logger = logger;
         _socketAsyncEventArgsPool = socketAsyncEventArgsPool;
+        _resolvers = resolvers;
 
         _dnsServerEndPoint = new IPEndPoint(
             IPAddress.Parse(settings.Value.DnsServer.BindAddress),
@@ -53,6 +59,9 @@ public class DomainResolverServer : IDomainResolverServer, IResolverResponseList
             settings.Value,
             this
         );
+
+        _logDebug = _logger.IsEnabled(LogLevel.Debug);
+        _logTrace = _logger.IsEnabled(LogLevel.Trace);
     }
 
     public Task StartupAsync()
@@ -68,7 +77,6 @@ public class DomainResolverServer : IDomainResolverServer, IResolverResponseList
         _socket.Bind(_dnsServerEndPoint);
         
         var args = _socketAsyncEventArgsPool.Acquire();
-        args.UserToken = AsyncType.Client;
         args.RemoteEndPoint = new IPEndPoint(IPAddress.Any, 0);
         args.SetCompleted(IO_Received);
         Interlocked.Increment(ref _ioReceive);
@@ -170,82 +178,50 @@ public class DomainResolverServer : IDomainResolverServer, IResolverResponseList
         var domain = ReadDomainLabels(data, ref i, end);
         var query_type = data[i] << 8 | data[i + 1];
         var query_class = data[i + 2] << 8 | data[i + 3];
+        
+        // query type:
+        // 1 - A record
+        // 5 - CNAME, typically used in response to point to another alias; the chain of cname-->type A records are typically responded in same
+        // 65 - HTTPS; resolve dns to https endpoint
+        
+        // class:
+        // 1 - IN
 
-        if (!domain.EndsWith(".arpa"))
+        if (query_type == 1 && // A record ipv4 and IN class
+            query_class == 1 &&
+            !domain.EndsWith(".arpa"))
         {
-            _logger.LogDebug(
-                "Resolve ID:{TransactionId} Flags:{Flags} DNS:{DNS} Type:{Type} Class:{Class} -- FROM: {From}",
-                header.TransactionId,
-                header.Flags,
-                domain,
-                query_type.ToString("x4"),
-                query_class.ToString("x4"),
-                endPoint.ToString()
-            );
-
-            // if (query_type == 1 && // A record ipv4 and IN class
-            //     query_class == 1)
+            if (_logDebug)
             {
-                var args = _socketAsyncEventArgsPool.Acquire();
-                var response = args.Buffer!;
-                var response_offset = DnsHeader.Size;
+                _logger.LogDebug(
+                    "Resolve ID:{TransactionId} Flags:{Flags} DNS:{DNS} Type:{Type} Class:{Class} -- FROM: {From}",
+                    header.TransactionId,
+                    header.Flags,
+                    domain,
+                    query_type.ToString("x4"),
+                    query_class.ToString("x4"),
+                    endPoint.ToString()
+                );
+            }
+            
+            // resolve using resolvers...
 
-                var response_header = header;
-                response_header.Flags = 1 << 15; // QR 1 for response
-                response_header.NumberOfAnswers = 1;
-                response_header.Write(response, 0);
-
-                // copy the current packet question into response
-                Buffer.BlockCopy(data, DnsHeader.Size, response, response_offset, length - DnsHeader.Size);
-                response_offset += length - DnsHeader.Size;
-
-                // add answer here...
-                // 4.1.4. of https://www.ietf.org/rfc/rfc1035.txt - offset in this packet with 2 high bits set for the DNS name
-                /*
-                    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-                    | 1  1|                OFFSET                   |
-                    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-                 */
-                var name_offset = 12 | (3 << 14); // offset is 12 from start of packet, then OR the two high bits
-                response[response_offset++] = (byte)(name_offset >> 8);
-                response[response_offset++] = (byte)(name_offset & 0xff);
-
-                // response type
-                response[response_offset++] = 0;
-                response[response_offset++] = 1;
-                
-                // response class
-                response[response_offset++] = 0;
-                response[response_offset++] = 1;
-                
-                // TTL as int; value in seconds
-                var ttl = 300; // 5min
-                response[response_offset++] = (byte)(ttl >> 24);
-                response[response_offset++] = (byte)(ttl >> 16);
-                response[response_offset++] = (byte)(ttl >> 8);
-                response[response_offset++] = (byte)(ttl & 0xff);
-
-                // data length
-                response[response_offset++] = 0;
-                response[response_offset++] = 4; // ipv4 address
-
-                // ipv4 address (10.20.30.40)
-                response[response_offset++] = 10;
-                response[response_offset++] = 20;
-                response[response_offset++] = 30;
-                response[response_offset++] = 40;
-                
-                // send
-                args.UpdateBufferLength(response_offset);
-                args.RemoteEndPoint = endPoint;
-                args.SetCompleted(IO_Sent);
-                Interlocked.Increment(ref _ioSend);
-                if (!_socket!.SendToAsync(args))
+            foreach (var resolver in _resolvers)
+            {
+                if (resolver.HandleRequest(
+                        this,
+                        header,
+                        domain,
+                        (QueryType)query_type,
+                        (QueryClass)query_class,
+                        endPoint,
+                        data,
+                        offset,
+                        length))
                 {
-                    IO_Sent(args);
+                    // short circuit the request; handled...
+                    return;
                 }
-
-                return;
             }
         }
 
@@ -258,21 +234,6 @@ public class DomainResolverServer : IDomainResolverServer, IResolverResponseList
         // Class: IN (0x0001)
 
         ////////////////////////////////////////////////////////
-
-        // respond with echoing
-
-        // var new_data = new byte[65535];
-        // Buffer.BlockCopy(data, offset, new_data, 0, length);
-        //
-        // var args = new SocketAsyncEventArgs();
-        // args.SetBuffer(new_data, 0, length);
-        // args.RemoteEndPoint = endPoint;
-        // args.Completed += IO_Sent;
-        // Interlocked.Increment(ref _ioSend);
-        // if (!_socket!.SendToAsync(args))
-        // {
-        //     IO_Sent(this, args);
-        // }
 
         _resolverProxy.BeginResolve(
             endPoint,
@@ -325,7 +286,7 @@ public class DomainResolverServer : IDomainResolverServer, IResolverResponseList
         Interlocked.Decrement(ref _ioSend);
     }
 
-    public void OnResolverResponse(IPEndPoint client, int transaction_id, byte[] data, int offset, int length)
+    public void OnResolverResponse(EndPoint client, int transaction_id, byte[] data, int offset, int length, TimeSpan elapsed)
     {
         // send result back to client
         
@@ -335,6 +296,21 @@ public class DomainResolverServer : IDomainResolverServer, IResolverResponseList
         Buffer.BlockCopy(data, offset, buffer, 0, length);
         args.UpdateBufferLength(length);
         args.RemoteEndPoint = client;
+        args.SetCompleted(IO_Sent);
+        Interlocked.Increment(ref _ioSend);
+        if (!_socket!.SendToAsync(args))
+        {
+            IO_Sent(args);
+        }
+
+        if (_logTrace)
+        {
+            _logger.LogTrace("TXID: {TransactionId} - Resolved in {Elapsed}", transaction_id, elapsed.ToString());
+        }
+    }
+
+    public void SendResponse(ExtendedSocketAsyncEventArgs args)
+    {
         args.SetCompleted(IO_Sent);
         Interlocked.Increment(ref _ioSend);
         if (!_socket!.SendToAsync(args))

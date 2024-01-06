@@ -24,22 +24,22 @@ public struct DnsHeader
 
     public void Write(byte[] data, int offset)
     {
-        data[offset++] = (byte)(TransactionId >> 4);
+        data[offset++] = (byte)(TransactionId >> 8);
         data[offset++] = (byte)(TransactionId & 0xff);
         
-        data[offset++] = (byte)(Flags >> 4);
+        data[offset++] = (byte)(Flags >> 8);
         data[offset++] = (byte)(Flags & 0xff);
         
-        data[offset++] = (byte)(NumberOfQuestions >> 4);
+        data[offset++] = (byte)(NumberOfQuestions >> 8);
         data[offset++] = (byte)(NumberOfQuestions & 0xff);
         
-        data[offset++] = (byte)(NumberOfAnswers >> 4);
+        data[offset++] = (byte)(NumberOfAnswers >> 8);
         data[offset++] = (byte)(NumberOfAnswers & 0xff);
         
-        data[offset++] = (byte)(NumberOfAuthorities >> 4);
+        data[offset++] = (byte)(NumberOfAuthorities >> 8);
         data[offset++] = (byte)(NumberOfAuthorities & 0xff);
         
-        data[offset++] = (byte)(NumberOfAdditional >> 4);
+        data[offset++] = (byte)(NumberOfAdditional >> 8);
         data[offset] = (byte)(NumberOfAdditional & 0xff);
     }
 

@@ -3,6 +3,7 @@ using DnsServer;
 using DnsServer.Endpoints;
 using DnsServer.Endpoints.Statistics;
 using DnsServer.Hosting;
+using DnsServer.Hosting.Resolvers;
 using DnsServer.Middleware;
 using DnsServer.Options;
 using DnsServer.Serializer;
@@ -10,6 +11,7 @@ using DnsServer.Utilities;
 using Microsoft.AspNetCore.Http.Json;
 
 var builder = WebApplication.CreateBuilder(args);
+//builder.Configuration.AddYamlFile("appsettings.test.yaml", optional: false);
 if (builder.Environment.IsDevelopment())
 {
     builder.Configuration.AddJsonFile("appsettings.local.json", optional: true, reloadOnChange: true);
@@ -42,12 +44,17 @@ builder.Services.AddHttpContextAccessor();
 // custom services
 builder.Services.AddSingleton<ISocketAsyncEventArgsPool, SocketAsyncEventArgsPool>();
 builder.Services.AddSingleton<IDomainResolverServer, DomainResolverServer>();
+builder.Services.AddSingleton<IBufferPool>(_ => new BufferPool(8, 8192));
 
 // background services
 builder.Services.AddBackgroundService<IDomainResolverServer>();
 
 // endpoints
 builder.Services.AddEndpoints<StatisticsEndpoints>();
+
+// domain resolvers (the order matters here)
+builder.Services.AddDomainResolver<LegacyDomainResolver>();
+builder.Services.AddDomainResolver<TestDomainResolver>();
 
 ////////////////////////////////////////////////////////////
 

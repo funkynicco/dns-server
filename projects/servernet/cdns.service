@@ -1,0 +1,23 @@
+# Location of this file: /lib/systemd/system/cdns.service
+
+# Enable using: systemctl enable cdns
+# Disable using: systemctl disable cdns
+
+# Other commands
+# Start service:         systemctl start cdns
+# Stop service:          systemctl stop cdns
+# Service status:        systemctl status cdns
+# Reload service config: systemctl daemon-reload
+
+# Check logs of service: journalctl -u cdns
+
+[Unit]
+Description=Clustered DNS Server
+
+[Service]
+Type=simple
+WorkingDirectory=/dns-server
+ExecStart=/dns-server/DnsServer --urls http://*:5000
+
+[Install]
+WantedBy=multi-user.target

@@ -4,4 +4,9 @@ bin/
 obj/
 
 appsettings.*.json
+appsettings.*.yaml
 launchSettings.json
+testvm.py
+
+*.pyc
+*.csv
