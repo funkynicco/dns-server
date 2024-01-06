@@ -60,10 +60,10 @@ builder.Services.AddDomainResolver<TestDomainResolver>();
 
 var app = builder.Build();
 
-app.UseStaticFiles();
-app.UseDefaultFiles();
 app.UseMiddleware<SetHostMiddleware>(api_settings.SetHostMiddleware);
+app.UseStaticFiles();
 app.UseRouting();
+app.UseDefaultFiles();
 
 // register all endpoints we defined with AddEndpoints above
 app.Services.GetServices<IEndpointsRegisterer>().ForEach(a => a.RegisterEndpoints(app));
